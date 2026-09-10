@@ -1,0 +1,541 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.269 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.371 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.439 0 0);
+}
+
+@theme inline {
+  --font-sans:
+    var(--font-public-sans), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-mono:
+    var(--font-commit-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-foreground/20 outline-ring/50;
+  }
+  body {
+    @apply text-foreground;
+    /* Radial atmosphere driven by the active design palette (see the
+       [data-design] blocks at the end of this file). */
+    background: radial-gradient(
+        120% 95% at 50% 40%,
+        var(--scene-from) 0%,
+        var(--scene-mid) 50%,
+        var(--scene-to) 100%
+      )
+      fixed;
+    color: var(--ink);
+  }
+}
+
+/* ===================================================================== */
+/*  NOVA AMBIENT SCENE — aqua/teal futuristic atmosphere                 */
+/* ===================================================================== */
+/*
+ * Design palette tokens. The `:root` values below are the default
+ * (dark-green) design. The `[data-design="light"]` and `[data-design="dark"]`
+ * blocks at the very end of this file override them. `data-design` is set on
+ * <html> from the `DESIGN` env var (see app/layout.tsx).
+ */
+:root {
+  --aqua: #2fe6c0; /* primary accent   */
+  --cyan: #22d3ee; /* secondary accent */
+  --mint: #7dffe0; /* bright accent    */
+  --node: #c8fff2;
+  --ink: #ecfffb; /* main text on the scene */
+  --ink-soft: #86b9b0; /* muted text */
+  --glass: rgba(8, 18, 18, 0.55); /* glass panel fill */
+  --glass-line: rgba(94, 234, 212, 0.18); /* glass border */
+
+  /* Solid control surfaces */
+  --surface: rgb(8, 40, 36); /* button / trigger fill */
+  --surface-hover: rgb(12, 52, 46);
+  --menu-bg: rgba(6, 16, 15, 0.95); /* dropdown menu fill */
+  --accent-contrast: #04221d; /* text on a bright-accent button */
+
+  /* In-call control deck (input + icon row) */
+  --deck-bg: rgba(16, 30, 28, 0.72);
+  --deck-bg-2: rgba(6, 14, 13, 0.82);
+  --deck-shadow: rgba(0, 0, 0, 0.5);
+
+  /* Accent glows (box-shadows / rings) */
+  --accent-glow: rgba(47, 230, 192, 0.35);
+  --danger: #ff6b7a; /* destructive (end call) — shared across designs */
+
+  /* Ambient scene */
+  --scene-from: #0a2e2a;
+  --scene-mid: #04110f;
+  --scene-to: #010706;
+  --scene-blend: screen; /* blob blend mode (screen on dark, normal on light) */
+  --energy-a: rgba(47, 230, 192, 0.6);
+  --energy-b: rgba(34, 211, 238, 0.55);
+  --energy-c: rgba(125, 255, 224, 0.5);
+  --energy-core: rgba(200, 255, 242, 0.85);
+  --vignette: rgba(1, 6, 5, 0.9);
+  /* Particle canvas colors (rgb triplets read by SceneBackground) */
+  --particle-orbit-rgb: 150, 255, 235;
+  --particle-drift-rgb: 125, 255, 224;
+  --particle-shadow: rgba(47, 230, 192, 0.8);
+
+  /* Welcome headline */
+  --headline-color: #f2fffb;
+  --headline-glow: rgba(47, 230, 192, 0.75);
+}
+
+/* Back scene sits behind everything. */
+.scene-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.scene-bg .scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Centered glowing energy orb */
+.energy {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(720px, 90vw);
+  aspect-ratio: 1;
+  pointer-events: none;
+}
+.energy .b {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(55px);
+  mix-blend-mode: var(--scene-blend);
+}
+.energy .b1 {
+  inset: 8%;
+  background: radial-gradient(circle, var(--energy-a), transparent 64%);
+  animation: drift1 13s ease-in-out infinite;
+}
+.energy .b2 {
+  inset: 22% 6% 24% 30%;
+  background: radial-gradient(circle, var(--energy-b), transparent 64%);
+  animation: drift2 17s ease-in-out infinite;
+}
+.energy .b3 {
+  inset: 26% 30% 8% 6%;
+  background: radial-gradient(circle, var(--energy-c), transparent 64%);
+  animation: drift3 11s ease-in-out infinite;
+}
+.energy .swirl {
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.55;
+  mix-blend-mode: var(--scene-blend);
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    var(--energy-c),
+    transparent 38%,
+    var(--energy-b),
+    transparent 72%,
+    var(--energy-a),
+    transparent
+  );
+}
+.energy .core {
+  position: absolute;
+  inset: 34%;
+  border-radius: 50%;
+  filter: blur(26px);
+  mix-blend-mode: var(--scene-blend);
+  background: radial-gradient(circle, var(--energy-core), var(--energy-a) 45%, transparent 72%);
+  animation: pulse 5.5s ease-in-out infinite;
+}
+@keyframes drift1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(7%, -6%) scale(1.12);
+  }
+}
+@keyframes drift2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-8%, 5%) scale(1.18);
+  }
+}
+@keyframes drift3 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(5%, 7%) scale(0.9);
+  }
+}
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+}
+
+/* Orbiting luminous particles canvas */
+#orbit {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Film overlays sit above content but never block clicks. */
+.scene-overlays {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+.scene-overlays .grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.scene-overlays .vignette {
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 240px 80px var(--vignette);
+}
+
+/* Give the digital human a little more presence in the portrait test card so
+   facial movement is easy to inspect while keeping the full figure framed. */
+.elevenlabs-avatar-canvas > canvas {
+  transform: scale(1.25);
+  transform-origin: center;
+}
+
+.font-chakra { font-family: var(--font-public-sans, sans-serif); }
+
+.avatar-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+}
+.avatar-loader .blob-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 150px;
+  height: 150px;
+}
+/* shape-shifting gradient blob — the focal element */
+.avatar-loader .blob {
+  position: absolute;
+  width: 112px;
+  height: 112px;
+  background: linear-gradient(
+    130deg,
+    var(--mint) 0%,
+    var(--aqua) 38%,
+    var(--cyan) 68%,
+    var(--node) 105%
+  );
+  background-size: 200% 200%;
+  background-position: 0% 50%;
+  border-radius: 60% 40% 35% 65% / 55% 45% 55% 45%;
+  box-shadow:
+    0 0 38px var(--accent-glow),
+    inset 0 0 28px rgba(255, 255, 255, 0.28);
+  animation:
+    blobMorph 7s ease-in-out infinite,
+    blobFlow 5s ease-in-out infinite,
+    blobPulse 3.6s ease-in-out infinite;
+}
+/* blurred twin behind it for a soft volumetric glow */
+.avatar-loader .blob-glow {
+  width: 130px;
+  height: 130px;
+  filter: blur(26px);
+  box-shadow: none;
+  animation:
+    blobMorph 7s ease-in-out infinite,
+    blobFlow 5s ease-in-out infinite,
+    blobGlow 3.6s ease-in-out infinite;
+}
+@keyframes blobMorph {
+  0%,
+  100% {
+    border-radius: 60% 40% 35% 65% / 55% 45% 55% 45%;
+  }
+  25% {
+    border-radius: 45% 55% 60% 40% / 50% 60% 40% 50%;
+  }
+  50% {
+    border-radius: 40% 60% 55% 45% / 60% 40% 60% 40%;
+  }
+  75% {
+    border-radius: 55% 45% 45% 55% / 45% 55% 45% 55%;
+  }
+}
+@keyframes blobFlow {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+@keyframes blobPulse {
+  0%,
+  100% {
+    transform: scale(0.97);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.05);
+    filter: brightness(1.16);
+  }
+}
+@keyframes blobGlow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.85;
+  }
+}
+/* label with a light sweeping through the text */
+.avatar-loader .label {
+  font-family: var(--font-chakra, var(--font-mono));
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  background: linear-gradient(
+    90deg,
+    rgba(125, 255, 224, 0.3) 0%,
+    var(--mint) 50%,
+    rgba(125, 255, 224, 0.3) 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: labelShimmer 2.6s linear infinite;
+}
+@keyframes labelShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ===================================================================== */
+/*  DESIGN PALETTES — switched via <html data-design="…"> (DESIGN env)    */
+/*  :root above = "dark-green" (default). Below override per design.      */
+/* ===================================================================== */
+
+/* LIGHT — warm "Alena" aura palette: coral / peach → lavender → soft blue on
+   a warm cream base. Coral is the primary accent. */
+[data-design='light'] {
+  --aqua: #f4795d; /* coral primary accent */
+  --cyan: #8fb6e6; /* soft blue secondary */
+  --mint: #ffc2a3; /* warm peach bright accent */
+  --node: #cdb4e6; /* soft lilac */
+  --ink: #3b333f; /* warm charcoal text */
+  --ink-soft: #8c8290;
+  --glass: rgba(255, 255, 255, 0.66);
+  --glass-line: rgba(230, 150, 130, 0.22);
+
+  --surface: #ffffff;
+  --surface-hover: #fdf3ee; /* warm cream hover */
+  --menu-bg: rgba(255, 255, 255, 0.96);
+  --accent-contrast: #ffffff; /* white text on the coral accent button */
+
+  --accent-glow: rgba(244, 121, 93, 0.3);
+
+  /* In-call deck: light warm glass */
+  --deck-bg: rgba(255, 255, 255, 0.82);
+  --deck-bg-2: rgba(250, 242, 240, 0.9);
+  --deck-shadow: rgba(180, 150, 140, 0.28);
+
+  --scene-from: #fce8e0; /* warm cream-peach */
+  --scene-mid: #f7ede9;
+  --scene-to: #e9e6f3; /* soft lavender-blue */
+  --scene-blend: normal; /* screen would wash out on a light background */
+  --energy-a: rgba(249, 138, 107, 0.42); /* coral / peach */
+  --energy-b: rgba(184, 162, 235, 0.38); /* lavender */
+  --energy-c: rgba(150, 196, 235, 0.34); /* soft blue */
+  --energy-core: rgba(255, 236, 226, 0.6);
+  --vignette: rgba(212, 180, 184, 0.2);
+  --particle-orbit-rgb: 250, 162, 132; /* peach */
+  --particle-drift-rgb: 200, 172, 226; /* lavender */
+  --particle-shadow: rgba(249, 138, 107, 0.45);
+
+  --headline-color: #4a3f48;
+  --headline-glow: rgba(249, 138, 107, 0.4);
+}
+
+/* DARK — warm amber / orange on near-black charcoal. */
+[data-design='dark'] {
+  --aqua: #ffb347; /* amber primary accent */
+  --cyan: #ff7a45; /* warm orange secondary */
+  --mint: #ffd08a; /* bright amber */
+  --node: #ffe1b0;
+  --ink: #fff6ec; /* warm white text */
+  --ink-soft: #b8a48f;
+  --glass: rgba(24, 16, 8, 0.55);
+  --glass-line: rgba(255, 170, 80, 0.18);
+
+  --surface: rgb(38, 24, 10);
+  --surface-hover: rgb(52, 34, 16);
+  --menu-bg: rgba(20, 13, 7, 0.95);
+  --accent-contrast: #2a1705; /* dark text on amber buttons */
+
+  --accent-glow: rgba(255, 170, 80, 0.35);
+
+  --deck-bg: rgba(28, 18, 10, 0.74);
+  --deck-bg-2: rgba(14, 9, 5, 0.84);
+  --deck-shadow: rgba(0, 0, 0, 0.5);
+
+  --scene-from: #2a1a0a;
+  --scene-mid: #140d05;
+  --scene-to: #0a0603;
+  --scene-blend: screen;
+  --energy-a: rgba(255, 179, 71, 0.55);
+  --energy-b: rgba(255, 122, 69, 0.5);
+  --energy-c: rgba(255, 208, 138, 0.5);
+  --energy-core: rgba(255, 236, 200, 0.85);
+  --vignette: rgba(10, 5, 1, 0.9);
+  --particle-orbit-rgb: 255, 210, 150;
+  --particle-drift-rgb: 255, 180, 110;
+  --particle-shadow: rgba(255, 170, 80, 0.8);
+
+  --headline-color: #fff3e2;
+  --headline-glow: rgba(255, 170, 80, 0.7);
+}

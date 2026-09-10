@@ -1,9 +1,0 @@
-livekit-agents[openai,silero,turn-detector]~=1.4
-livekit-plugins-elevenlabs~=1.4
-python-dotenv
-numpy
-onnxruntime
-transformers
-deepfilternet
-torch==2.1.2
-torchaudio==2.1.2
