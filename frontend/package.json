@@ -12,6 +12,7 @@
     "shadcn:install": "pnpm dlx shadcn@latest add --yes --overwrite @agents-ui/agent-audio-visualizer-bar @agents-ui/agent-audio-visualizer-grid @agents-ui/agent-audio-visualizer-radial @agents-ui/agent-control-bar @agents-ui/agent-session-provider @agents-ui/agent-track-control @agents-ui/agent-track-toggle @agents-ui/agent-chat-transcript @agents-ui/agent-chat-indicator @agents-ui/start-audio-button @agents-ui/agent-audio-visualizer-aura @agents-ui/agent-audio-visualizer-wave @agents-ui/nextjs-api-token-route @agents-ui/agent-session-view-01 && pnpm format"
   },
   "dependencies": {
+    "@elevenlabs/react": "^1.15.2",
     "@livekit/components-react": "^2.9.20",
     "@livekit/protocol": "^1.41.0",
     "@phosphor-icons/react": "^2.1.8",
@@ -32,12 +33,12 @@
     "@xyflow/react": "^12.10.0",
     "ai": "^5.0.105",
     "axios": "^1.7.9",
-    "furenderkit": "file:vendor/furenderkit-1.7.1.tgz",
     "buffer-image-size": "^0.6.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "embla-carousel-react": "^8.6.0",
+    "furenderkit": "file:vendor/furenderkit-1.7.1.tgz",
     "jose": "^6.0.12",
     "livekit-client": "^2.17.2",
     "livekit-server-sdk": "^2.13.3",

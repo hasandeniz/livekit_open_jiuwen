@@ -17,6 +17,7 @@ const FRAME_INTERVAL_MS = 16;
 // Amplifies the FaceUnity English viseme intensity (mouth opens wider). 1.0 is the
 // SDK default; the stock visemes read as too closed, so we drive it harder.
 const EN_VISEME_INTENSITY = 1.6;
+const MOUTH_OPEN_GAIN = 1.45;
 
 function uniq<T>(arr: T[]): T[] {
   return Array.from(new Set(arr));
@@ -168,8 +169,13 @@ async function initAvatar(s: AvatarSingleton): Promise<void> {
   const sizeToParent = () => {
     const dpr = window.devicePixelRatio || 1;
     const rect = s.canvas.getBoundingClientRect();
-    const w = Math.max(1, Math.round(rect.width * dpr));
-    const h = Math.max(1, Math.round(rect.height * dpr));
+    // The test page scales the canvas to make the face easier to inspect. Render
+    // that canvas at the same multiplier so the enlarged avatar stays sharp.
+    const visualScale = s.canvas.parentElement?.classList.contains('elevenlabs-avatar-canvas')
+      ? 1.25
+      : 1;
+    const w = Math.max(1, Math.round(rect.width * dpr * visualScale));
+    const h = Math.max(1, Math.round(rect.height * dpr * visualScale));
     renderer.resize(w, h);
   };
   const resizeObserver = new ResizeObserver(() => sizeToParent());
@@ -384,7 +390,7 @@ export function enableLipSync(): boolean {
     // 1) pick the vowel shape by blending round→open→wide using `shape`
     // 2) bias that toward the teeth/sibilant viseme by `sibilance`
     // 3) interpolate from the closed mouth toward that target by `openness`
-    const o = s.openness;
+    const o = Math.min(1, s.openness * MOUTH_OPEN_GAIN);
     const sh = s.shape;
     const sib = s.sibilance;
     for (let i = 0; i < scratch.length; i++) {
