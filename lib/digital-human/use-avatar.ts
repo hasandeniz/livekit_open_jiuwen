@@ -19,7 +19,7 @@ const AVATAR_CAMERA_ZOOM = 1.1;
 // Amplifies the FaceUnity English viseme intensity (mouth opens wider). 1.0 is the
 // SDK default; the stock visemes read as too closed, so we drive it harder.
 const EN_VISEME_INTENSITY = 1.6;
-const MOUTH_OPEN_GAIN = 1.45;
+const MOUTH_OPEN_GAIN = 1.25;
 
 function uniq<T>(arr: T[]): T[] {
   return Array.from(new Set(arr));

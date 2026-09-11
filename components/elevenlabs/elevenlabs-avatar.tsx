@@ -119,7 +119,7 @@ export function ElevenLabsAvatar() {
       const targetOpen = aligned
         ? aligned.openness * Math.min(1, Math.max(0, volume * 5.2))
         : acousticOpen;
-      openness += (targetOpen - openness) * (targetOpen > openness ? 0.45 : 0.16);
+      openness += (targetOpen - openness) * (targetOpen > openness ? 0.45 : 0.30);
       setMouthOpenness(openness);
 
       const spectrum = getOutputByteFrequencyData();
