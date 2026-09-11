@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@source '../node_modules/pptx-react-viewer/dist/**/*.{js,mjs}';
 
 @custom-variant dark (&:is(.dark *));
 

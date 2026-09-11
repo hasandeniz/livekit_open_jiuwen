@@ -1,3 +1,140 @@
+.pptx-panel {
+  max-width: 1560px;
+  margin: 24px auto 0;
+  border: 1px solid #dfe4df;
+  border-radius: 24px;
+  overflow: hidden;
+  background: #fff;
+  color: #243b36;
+}
+.pptx-header,
+.pptx-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+}
+.pptx-header h2 {
+  font-size: 22px;
+  font-weight: 600;
+}
+.pptx-header .section-eyebrow {
+  color: #63726c;
+}
+.pptx-readonly {
+  font-size: 12px;
+  border: 1px solid #dfe4df;
+  border-radius: 20px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+.pptx-url-form {
+  padding: 0 24px 20px;
+}
+.pptx-url-form label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.pptx-url-controls {
+  display: flex;
+  gap: 8px;
+}
+.pptx-url-controls input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #dfe4df;
+  border-radius: 10px;
+  padding: 12px;
+  background: transparent;
+}
+.pptx-panel button {
+  border: 1px solid #dfe4df;
+  border-radius: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+.pptx-url-controls button[type='submit'] {
+  background: #243b36;
+  color: #fff;
+}
+.pptx-panel button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.pptx-panel button:focus-visible,
+.pptx-panel input:focus-visible {
+  outline: 2px solid #549b79;
+  outline-offset: 3px;
+}
+.pptx-url-form p {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #63726c;
+}
+.pptx-message {
+  padding: 32px 24px;
+  text-align: center;
+  font-size: 14px;
+}
+.pptx-error {
+  color: #b93838;
+}
+.pptx-navigation {
+  border-top: 1px solid #dfe4df;
+  padding-block: 12px;
+}
+.pptx-filename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+.pptx-navigation nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  font-size: 13px;
+}
+.pptx-viewport {
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+  background: #e8ece8;
+  overflow: auto;
+}
+.pptx-viewport > div {
+  min-width: 0;
+}
+[data-design='dark'] .pptx-panel {
+  background: #18231f;
+  color: #e0e9e3;
+  border-color: #35463e;
+}
+[data-design='dark'] .pptx-url-form p,
+[data-design='dark'] .pptx-header .section-eyebrow {
+  color: #a7c0b5;
+}
+[data-design='dark'] .pptx-viewport {
+  background: #101a16;
+}
+@media (max-width: 600px) {
+  .pptx-header,
+  .pptx-navigation {
+    padding-inline: 16px;
+  }
+  .pptx-url-form {
+    padding-inline: 16px;
+  }
+  .pptx-url-controls {
+    flex-wrap: wrap;
+  }
+  .pptx-url-controls input {
+    flex-basis: 100%;
+  }
+}
 .assistant-shell {
   position: relative;
   z-index: 1;
@@ -25,19 +162,6 @@
   font-weight: 650;
   letter-spacing: -0.4px;
 }
-.brand-divider {
-  width: 1px;
-  height: 34px;
-  background: #d7ddd7;
-}
-.brand-caption {
-  display: block;
-  font-size: 10px;
-  font-weight: 400;
-  letter-spacing: 0.3px;
-  margin-top: 5px;
-  color: #718079;
-}
 .header-detail {
   display: flex;
   align-items: center;
@@ -50,7 +174,7 @@
   grid-template-columns: minmax(0, 0.8fr) minmax(420px, 1.2fr);
   max-width: 1560px;
   margin: auto;
-  min-height: 740px;
+  min-height: 560px;
   height: calc(100svh - 150px);
   max-height: 1050px;
   border: 1px solid #dfe4df;
@@ -458,14 +582,7 @@
   background: #101713;
   color: #e7efe8;
 }
-[data-design='dark'] .brand-divider {
-  background: #33433a;
-}
-[data-design='dark'] .brand-caption,
 [data-design='dark'] .header-detail,
-[data-design='dark'] .assistant-footer {
-  color: #8fa097;
-}
 [data-design='dark'] .assistant-workspace {
   border-color: #2c3b32;
   background: #17221c;
@@ -512,11 +629,6 @@
 [data-design='dark'] .empty-symbol > span {
   background: #17221c;
   color: #b9d39b;
-}
-[data-design='dark'] .conversation-hints span {
-  border-color: #35473a;
-  color: #a8bba9;
-  background: #1c2a21;
 }
 [data-design='dark'] .message-author {
   color: #9caf9f;
@@ -628,21 +740,6 @@
   line-height: 1.9;
   margin-top: 12px;
 }
-.conversation-hints {
-  display: flex;
-  gap: 7px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-top: 28px;
-}
-.conversation-hints span {
-  padding: 7px 10px;
-  border: 1px solid #e6eadd;
-  border-radius: 7px;
-  font-size: 9px;
-  color: #71816c;
-  background: #fbfcf7;
-}
 .chat-message {
   display: flex;
   flex-direction: column;
@@ -736,16 +833,6 @@
 .assistant-shell select:focus-visible {
   outline: 2px solid #91b365;
   outline-offset: 4px;
-}
-.assistant-footer {
-  max-width: 1560px;
-  margin: auto;
-  display: flex;
-  justify-content: space-between;
-  padding: 18px 3px;
-  font-size: 9px;
-  color: #8a958c;
-  letter-spacing: 0.2px;
 }
 .session-notice {
   position: relative;
@@ -843,9 +930,6 @@
   .assistant-brand svg {
     height: 26px;
   }
-  .brand-divider {
-    height: 28px;
-  }
   .header-detail {
     display: none;
   }
@@ -887,10 +971,6 @@
   .composer-layout .chat-controls .call-controls {
     flex-direction: row;
   }
-  .assistant-footer {
-    font-size: 8px;
-    gap: 15px;
-  }
   .stage-bottom {
     position: relative;
     right: auto;
@@ -908,4 +988,381 @@
     transition: none !important;
     animation: none !important;
   }
+}
+
+/* On-demand presentation workspace. The avatar, chat and viewer stay mounted. */
+.workspace-tabs {
+  display: none;
+}
+.presentation-stage[hidden] {
+  display: none !important;
+}
+.presentation-trigger {
+  padding: 9px 12px;
+  border: 1px solid #dfe6dc;
+  border-radius: 10px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pptx-url-dialog {
+  position: fixed;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+}
+.pptx-url-dialog::backdrop {
+  background: #071b16a6;
+  backdrop-filter: blur(4px);
+}
+.pptx-url-dialog .pptx-header {
+  padding-bottom: 24px;
+}
+.pptx-url-dialog .pptx-header button {
+  font-size: 22px;
+  line-height: 1;
+}
+.presentation-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 16px 24px 0;
+  padding: 12px;
+  border: 1px solid #dfe6dc;
+  border-radius: 12px;
+  background: #eff4ea;
+}
+.presentation-file-icon {
+  width: 34px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: #dce8d4;
+  color: #37593d;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 650;
+}
+.presentation-card > div:not(.presentation-card-actions) {
+  flex: 1;
+  min-width: 0;
+}
+.presentation-card strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 550;
+}
+.presentation-card > div > span {
+  display: block;
+  font-size: 10px;
+  margin-top: 4px;
+  color: #65776a;
+}
+.presentation-card button {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  padding: 9px 12px;
+  border-radius: 8px;
+}
+.presentation-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+  justify-content: flex-end;
+}
+.presentation-card-actions .presentation-download {
+  color: #496151;
+  font-weight: 500;
+}
+.assistant-workspace.has-presentation {
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.48fr);
+  grid-template-rows: 84px minmax(0, 1fr);
+  min-height: 560px;
+}
+.has-presentation .avatar-stage {
+  grid-column: 2;
+  grid-row: 1;
+  min-height: 0;
+  padding: 12px 16px 12px 82px;
+  justify-content: center;
+}
+.has-presentation .avatar-stage::after,
+.has-presentation .avatar-spotlight {
+  display: none;
+}
+.has-presentation .stage-topline {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.has-presentation .avatar-presentation {
+  position: absolute;
+  left: 16px;
+  top: 14px;
+  width: 54px;
+  height: 54px;
+  min-height: 0;
+  margin: 0;
+  flex: none;
+  border-radius: 50%;
+  background: #47765b;
+}
+.has-presentation .avatar-presentation > div {
+  position: absolute;
+  width: 150px;
+  max-width: none;
+  height: 240px;
+  max-height: none;
+  top: -9px;
+}
+.has-presentation .chat-panel {
+  grid-column: 2;
+  grid-row: 2;
+  height: auto;
+  border-left: 1px solid #dfe6dc;
+}
+.has-presentation .chat-header {
+  padding: 16px;
+  gap: 8px;
+}
+.has-presentation .chat-header h2 {
+  font-size: 20px;
+}
+.has-presentation .chat-header .section-eyebrow {
+  display: none;
+}
+.has-presentation .chat-header-actions {
+  gap: 8px;
+}
+.has-presentation .chat-history {
+  padding: 18px;
+}
+.has-presentation .presentation-card {
+  margin: 12px 14px 0;
+}
+.has-presentation .composer-area {
+  padding: 14px;
+}
+.has-presentation .composer-layout {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.has-presentation .composer-layout.is-compact {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+}
+.has-presentation .presentation-stage {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.presentation-stage .pptx-preview {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.presentation-stage .pptx-navigation {
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 18px;
+  border-top: 0;
+  border-bottom: 1px solid #dfe6dc;
+}
+.presentation-stage .pptx-filename {
+  flex: 1;
+  min-width: 100px;
+  font-weight: 550;
+}
+.pptx-view-actions {
+  display: flex;
+  gap: 8px;
+}
+.pptx-view-actions button {
+  font-size: 12px;
+  min-width: 40px;
+  padding-inline: 10px;
+}
+.pptx-view-actions .pptx-zoom-level {
+  min-width: 58px;
+}
+.presentation-stage .pptx-viewport {
+  flex: 1;
+  min-height: 0;
+}
+.pptx-navigation nav button {
+  height: 40px;
+  min-height: 40px;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}
+[data-design='dark'] .presentation-trigger,
+[data-design='dark'] .presentation-card,
+[data-design='dark'] .has-presentation .chat-panel,
+[data-design='dark'] .presentation-stage .pptx-navigation {
+  border-color: #35473a;
+}
+[data-design='dark'] .presentation-card {
+  background: #202f24;
+}
+[data-design='dark'] .presentation-file-icon {
+  background: #344f3c;
+  color: #d5eba9;
+}
+[data-design='dark'] .presentation-card > div > span {
+  color: #a7baa9;
+}
+[data-design='dark'] .presentation-card-actions .presentation-download {
+  color: #c6d9c8;
+}
+@media (max-width: 900px) {
+  .assistant-workspace.has-presentation {
+    display: grid;
+    height: calc(100dvh - 112px);
+    min-height: 480px;
+    max-height: none;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 76px 44px minmax(0, 1fr) auto;
+  }
+  .has-presentation .avatar-stage {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .has-presentation .workspace-tabs {
+    grid-column: 1;
+    grid-row: 2;
+    display: flex;
+    background: #eef3e9;
+    border-bottom: 1px solid #dfe6dc;
+  }
+  .workspace-tabs button {
+    flex: 1;
+    cursor: pointer;
+    font-size: 13px;
+    border-bottom: 2px solid transparent;
+  }
+  .workspace-tabs button[aria-pressed='true'] {
+    border-bottom-color: #567b47;
+    font-weight: 650;
+    background: #dfead8;
+    color: #294539;
+  }
+  .has-presentation .presentation-stage {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .has-presentation .chat-panel {
+    display: contents;
+  }
+  .has-presentation .chat-header {
+    display: none;
+  }
+  .has-presentation .chat-history {
+    grid-column: 1;
+    grid-row: 3;
+    background: #fdfefb;
+  }
+  .has-presentation .composer-area {
+    grid-column: 1;
+    grid-row: 4;
+    background: #fdfefb;
+  }
+  .has-presentation .presentation-card {
+    display: none;
+  }
+  .has-presentation .session-notice {
+    position: absolute;
+    z-index: 5;
+    bottom: 140px;
+    left: 16px;
+    right: 16px;
+    margin: 0;
+  }
+  .assistant-workspace.has-presentation {
+    position: relative;
+  }
+  .has-presentation[data-mobile-view='presentation'] .chat-history {
+    display: none;
+  }
+  .has-presentation[data-mobile-view='chat'] .presentation-stage {
+    display: none;
+  }
+  .has-presentation .pptx-navigation {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .has-presentation .pptx-filename {
+    flex-basis: 100%;
+  }
+  .has-presentation .pptx-view-actions {
+    margin-left: auto;
+  }
+  .has-presentation .composer-note {
+    display: none;
+  }
+  .has-presentation .composer-layout {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px;
+  }
+  .has-presentation .composer-layout .chat-controls .start-button {
+    width: 110px;
+    min-width: 110px;
+  }
+  .has-presentation .composer-layout .chat-controls .secondary-button {
+    width: 110px;
+    min-width: 110px;
+    padding: 6px;
+  }
+  [data-design='dark'] .has-presentation .chat-history,
+  [data-design='dark'] .has-presentation .composer-area {
+    background: #17221c;
+  }
+  [data-design='dark'] .has-presentation .workspace-tabs {
+    background: #17221c;
+    border-color: #35473a;
+  }
+  [data-design='dark'] .workspace-tabs button[aria-pressed='true'] {
+    background: #2a3e2c;
+    color: #d5eba9;
+    border-color: #b9d39b;
+  }
+}
+.has-presentation .chat-empty {
+  padding: 12px 0;
+  min-height: 0;
+}
+.has-presentation .empty-symbol {
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  margin-bottom: 14px;
+}
+.has-presentation .empty-symbol > svg {
+  width: 22px;
+  height: 22px;
+}
+.has-presentation .empty-symbol > span {
+  top: -5px;
+  right: -5px;
+  font-size: 15px;
+  padding: 0 2px;
+}
+.has-presentation .chat-empty h3 {
+  font-size: 20px;
 }

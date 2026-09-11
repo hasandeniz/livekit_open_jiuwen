@@ -12,12 +12,15 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@ai-sdk/react": "^4.0.76",
     "@elevenlabs/react": "^1.15.2",
+    "ai": "^7.0.0",
     "axios": "^1.7.9",
     "clsx": "^2.1.1",
     "furenderkit": "file:vendor/furenderkit-1.7.1.tgz",
     "next": "15.5.14",
     "next-themes": "^0.4.6",
+    "pptx-react-viewer": "3.16.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.3.1"

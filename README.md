@@ -15,7 +15,19 @@ pnpm dev
 
 Open http://localhost:3000. If .env.local already exists, edit it instead of copying over it. Run only one dev server in this folder.
 
-## Agent setup
+## PowerPoint preview
+
+Choose **Sunum ekle** in the chat header to enter a direct HTTP(S) `.pptx` URL. After downloading, a file card appears in the conversation area. Choose **Sunumu aç** to open the presentation alongside the chat; the avatar becomes compact above the chat. Closing the preview restores the original layout, preserving the conversation, voice session and last viewed slide. On mobile, **Sunum / Sohbet** switches the visible content while the call controls and message composer stay available. The preview toolbar provides slide navigation and a close control. It works without starting a voice session. Downloads can be cancelled and time out after 60 seconds. The current presentation stays available if adding a replacement fails or is cancelled.
+
+The file is fetched in the browser without credentials. Its server must allow the frontend origin via CORS (or serve the file from the same origin). Use a direct download or signed URL, not an Office/Drive sharing page. For local testing, place a presentation in `public/` and enter `http://localhost:3000/filename.pptx`.
+
+A two-slide smoke-test file is included at `http://localhost:3000/pptx-preview-test.pptx`.
+
+The implementation uses [pptx-react-viewer](https://github.com/ChristopherVR/pptx-viewer/) with `SlideCanvas` and `useViewerBuildingBlocks`, editing and autosave disabled, and only custom slide navigation. The viewer is loaded on demand in the browser. `components/powerpoint/slide-preview.tsx` accepts presentation bytes and a filename so the future OpenJiuwen/ElevenLabs tool can reuse it. Tool calling is not wired yet.
+
+The library's current package also imports its optional `ai` and `@ai-sdk/react` peers from its entry point. They are installed for Next.js module resolution; no AI chat or editing UI is mounted.
+
+## Agent configuration
 
 Configure voice, languages and LLM in ElevenLabs. Enable Language overrides in Security to use the language selector. Enable audio, user_transcript, agent_response, interruption and agent_response_correction events. The custom LLM dashboard URL field appends /chat/completions; use the base URL for your MaaS region and keep its key in an ElevenLabs secret.
 
@@ -29,7 +41,7 @@ Configure voice, languages and LLM in ElevenLabs. Enable Language overrides in S
 
 Mouth motion combines audio analysis with approximate character timing, not true phoneme tracking. Hand gestures use prerecorded animations. Playback volume is 55%. openJiuwen is not integrated yet.
 
-Voice sessions work in development and production when the server credentials are configured. Never expose keys through NEXT_PUBLIC_ variables.
+Voice sessions work in development and production when the server credentials are configured. Never expose keys through NEXT*PUBLIC* variables.
 
 ## Production deployment
 

@@ -6,6 +6,11 @@ import { ConversationProvider, useConversation } from '@elevenlabs/react';
 import { SUPPORTED_LANGUAGES } from '@/app-config';
 import { BrandLogo } from '@/components/app/brand-logo';
 import { ElevenLabsAvatar } from '@/components/elevenlabs/elevenlabs-avatar';
+import {
+  PowerPointPreview,
+  PowerPointUrlDialog,
+  type PresentationDocument,
+} from '@/components/powerpoint/powerpoint-preview';
 import { useDesign } from '@/lib/design/design-context';
 import { type TranscriptEntry, upsertTranscript } from '@/lib/elevenlabs/transcript';
 
@@ -31,6 +36,45 @@ function VoiceSession({ configured }: { configured: boolean }) {
   const startingRef = useRef(false);
   const endOfMessages = useRef<HTMLDivElement>(null);
   const followMessages = useRef(true);
+  const [presentation, setPresentation] = useState<PresentationDocument | null>(null);
+  const [presentationOpen, setPresentationOpen] = useState(false);
+  const [urlDialogOpen, setUrlDialogOpen] = useState(false);
+  const [mobileView, setMobileView] = useState<'presentation' | 'chat'>('presentation');
+  const presentationButton = useRef<HTMLButtonElement>(null);
+  const fileButton = useRef<HTMLButtonElement>(null);
+  const presentationStage = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (presentationOpen) presentationStage.current?.focus({ preventScroll: true });
+  }, [presentationOpen]);
+
+  function openPresentation() {
+    setPresentationOpen(true);
+    setMobileView('presentation');
+  }
+
+  function closePresentation() {
+    setPresentationOpen(false);
+    requestAnimationFrame(() => fileButton.current?.focus());
+  }
+
+  function downloadPresentation() {
+    if (!presentation) return;
+    const bytes = new Uint8Array(presentation.content);
+    const blob = new Blob([bytes.buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    });
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = href;
+    anchor.download = presentation.name.toLowerCase().endsWith('.pptx')
+      ? presentation.name
+      : `${presentation.name}.pptx`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(href);
+  }
 
   const conversation = useConversation({
     onConnect: () => {
@@ -171,10 +215,6 @@ function VoiceSession({ configured }: { configured: boolean }) {
       <header className="assistant-header">
         <Link href="/" className="assistant-brand" aria-label="Ana sayfa">
           <BrandLogo title="Huawei" className="h-8 w-auto" />
-          <span className="brand-divider" />
-          <span>
-            Digital Human<span className="brand-caption">Bir konuşmayla başlar.</span>
-          </span>
         </Link>
         <div className="header-detail">
           <button
@@ -188,7 +228,10 @@ function VoiceSession({ configured }: { configured: boolean }) {
           </button>
         </div>
       </header>
-      <div className="assistant-workspace">
+      <div
+        className={`assistant-workspace ${presentationOpen ? 'has-presentation' : ''}`}
+        data-mobile-view={mobileView}
+      >
         <section className="avatar-stage" aria-label="Dijital asistan">
           <div className="stage-topline">
             <label className="language-control">
@@ -216,6 +259,33 @@ function VoiceSession({ configured }: { configured: boolean }) {
             <ElevenLabsAvatar />
           </div>
         </section>
+        <nav className="workspace-tabs" aria-label="Çalışma alanı">
+          <button
+            type="button"
+            aria-pressed={mobileView === 'presentation'}
+            onClick={() => setMobileView('presentation')}
+          >
+            Sunum
+          </button>
+          <button
+            type="button"
+            aria-pressed={mobileView === 'chat'}
+            onClick={() => setMobileView('chat')}
+          >
+            Sohbet {messages.length > 0 && <span>({messages.length})</span>}
+          </button>
+        </nav>
+        <section
+          className="presentation-stage pptx-panel"
+          aria-label="Sunum önizleme"
+          hidden={!presentationOpen}
+          ref={presentationStage}
+          tabIndex={-1}
+        >
+          {presentation && (
+            <PowerPointPreview document={presentation} onClose={closePresentation} />
+          )}
+        </section>
         <section className="chat-panel" aria-label="Sohbet">
           <header className="chat-header">
             <div>
@@ -224,15 +294,50 @@ function VoiceSession({ configured }: { configured: boolean }) {
             </div>
             <div className="chat-header-actions">
               <button
+                ref={presentationButton}
+                type="button"
+                className="presentation-trigger"
+                onClick={() => setUrlDialogOpen(true)}
+                aria-haspopup="dialog"
+              >
+                Sunum ekle
+              </button>
+              <button
                 className="clear-chat-button"
                 type="button"
                 disabled={!messages.length && !error}
                 onClick={clearConversation}
+                aria-label="Sohbeti temizle"
               >
                 <VoiceIcon kind="clear" />
               </button>
             </div>
           </header>
+          {presentation && (
+            <article className="presentation-card" aria-label="Eklenen sunum" aria-live="polite">
+              <span className="presentation-file-icon" aria-hidden="true">
+                P
+              </span>
+              <div>
+                <strong title={presentation.name}>{presentation.name}</strong>
+                <span>PowerPoint · Salt okunur</span>
+              </div>
+              <div className="presentation-card-actions">
+                <button
+                  type="button"
+                  className="presentation-download"
+                  onClick={downloadPresentation}
+                >
+                  İndir
+                </button>
+                {!presentationOpen && (
+                  <button ref={fileButton} type="button" onClick={openPresentation}>
+                    Sunumu aç
+                  </button>
+                )}
+              </div>
+            </article>
+          )}
           {(!configured || error) && (
             <div className="session-notice" role="alert">
               <strong>
@@ -269,11 +374,6 @@ function VoiceSession({ configured }: { configured: boolean }) {
                   <br />
                   Konuşmamız burada görünecek.
                 </p>
-                <div className="conversation-hints">
-                  <span>Bir şey öğren</span>
-                  <span>Bir fikir keşfet</span>
-                  <span>Birlikte düşün</span>
-                </div>
               </div>
             ) : (
               messages.map((message) => (
@@ -359,10 +459,20 @@ function VoiceSession({ configured }: { configured: boolean }) {
           </div>
         </section>
       </div>
-      <footer className="assistant-footer">
-        <span>İnsan odaklı. Yapay zekâ destekli.</span>
-        <span>Huawei · Digital Human</span>
-      </footer>
+      {urlDialogOpen && (
+        <PowerPointUrlDialog
+          onLoaded={(document) => {
+            setPresentation(document);
+            setPresentationOpen(false);
+            setMobileView('chat');
+          }}
+          onClose={() => {
+            setUrlDialogOpen(false);
+            requestAnimationFrame(() => presentationButton.current?.focus());
+          }}
+        />
+      )}
+
     </main>
   );
 }
