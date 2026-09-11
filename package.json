@@ -8,12 +8,12 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/elevenlabs.test.mjs",
+    "test": "node --test tests/*.test.mjs",
     "format": "prettier --write ."
   },
   "dependencies": {
-    "axios": "^1.7.9",
     "@elevenlabs/react": "^1.15.2",
+    "axios": "^1.7.9",
     "clsx": "^2.1.1",
     "furenderkit": "file:vendor/furenderkit-1.7.1.tgz",
     "next": "15.5.14",
@@ -37,5 +37,10 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
-  "packageManager": "pnpm@9.15.9"
+  "packageManager": "pnpm@9.15.9",
+  "pnpm": {
+    "patchedDependencies": {
+      "livekit-client@2.22.3": "patches/livekit-client@2.22.3.patch"
+    }
+  }
 }

@@ -13,6 +13,9 @@ const AVATAR_URL = `${RES_URL}/avatar`;
 // Render one frame at most every ~16ms (≈60fps).
 const FRAME_INTERVAL_MS = 16;
 
+// Enlarge the 3D projection without stretching the rendered canvas pixels.
+const AVATAR_CAMERA_ZOOM = 1.1;
+
 // Amplifies the FaceUnity English viseme intensity (mouth opens wider). 1.0 is the
 // SDK default; the stock visemes read as too closed, so we drive it harder.
 const EN_VISEME_INTENSITY = 1.6;
@@ -168,13 +171,11 @@ async function initAvatar(s: AvatarSingleton): Promise<void> {
   const sizeToParent = () => {
     const dpr = window.devicePixelRatio || 1;
     const rect = s.canvas.getBoundingClientRect();
-    // The test page scales the canvas to make the face easier to inspect. Render
-    // that canvas at the same multiplier so the enlarged avatar stays sharp.
-    const visualScale = s.canvas.parentElement?.classList.contains('elevenlabs-avatar-canvas')
-      ? 1.25
-      : 1;
-    const w = Math.max(1, Math.round(rect.width * dpr * visualScale));
-    const h = Math.max(1, Math.round(rect.height * dpr * visualScale));
+    // Supersample the 3D image while keeping its CSS size unchanged. Cap the
+    // pixel ratio to bound GPU work on high-density displays.
+    const renderPixelRatio = Math.min(3, Math.max(2, dpr * 1.5));
+    const w = Math.max(1, Math.round(rect.width * renderPixelRatio));
+    const h = Math.max(1, Math.round(rect.height * renderPixelRatio));
     renderer.resize(w, h);
   };
   const resizeObserver = new ResizeObserver(() => sizeToParent());
@@ -182,12 +183,18 @@ async function initAvatar(s: AvatarSingleton): Promise<void> {
 
   const scene = renderer.createScene('scene');
   scene.setRenderMsaaLevel(rendererKit.EMSAAOption.MSAA_4X);
-  scene.enableRenderPostProcess(rendererKit.EPostProcessType.POST_PROCESS_FXAA, true);
+  // MSAA and supersampling smooth edges without FXAA softening facial detail.
+  scene.enableRenderPostProcess(rendererKit.EPostProcessType.POST_PROCESS_FXAA, false);
   scene.setRenderShadowQuality(rendererKit.EShadowQuality.SHADOW_QUALITY_LOW);
   scene.enableRenderPostProcess(rendererKit.EPostProcessType.POST_PROCESS_MIRROR, false);
 
   // --- avatar ---
-  scene.setCamera(camera);
+  const avatarCamera = scene.setCamera(camera);
+  const perspective = avatarCamera.getPerspective();
+  avatarCamera.setPerspective({
+    ...perspective,
+    focal_length: perspective.focal_length * AVATAR_CAMERA_ZOOM,
+  });
   scene.clearLight();
   scene.addLight(light);
 

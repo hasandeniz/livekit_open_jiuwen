@@ -64,7 +64,8 @@ export function ElevenLabsAvatar() {
       const durations = Array.isArray(alignment?.char_durations_ms)
         ? alignment.char_durations_ms
         : [];
-      if (!chars.length || chars.length !== starts.length || chars.length !== durations.length) return;
+      if (!chars.length || chars.length !== starts.length || chars.length !== durations.length)
+        return;
 
       const localEndMs = chars.reduce(
         (end, _char, index) => Math.max(end, starts[index] + durations[index]),
@@ -135,7 +136,7 @@ export function ElevenLabsAvatar() {
         setMouthShape(shape);
         setMouthSibilance(sibilance);
       } else if (total > 0) {
-        const targetShape = Math.min(1, Math.max(0, weighted / total / spectrum.length * 2));
+        const targetShape = Math.min(1, Math.max(0, (weighted / total / spectrum.length) * 2));
         shape += (targetShape - shape) * 0.22;
         setMouthShape(shape);
       }
@@ -161,11 +162,8 @@ export function ElevenLabsAvatar() {
   }, [getOutputByteFrequencyData, getOutputVolume]);
 
   return (
-    <div className="relative mx-auto h-[32rem] w-full max-w-[24rem] overflow-hidden rounded-2xl border border-(--glass-line) bg-black/20">
+    <div className="relative mx-auto h-[32rem] w-full max-w-[24rem] overflow-hidden">
       <AvatarCanvas className="elevenlabs-avatar-canvas" />
-      <span className="pointer-events-none absolute bottom-3 left-3 rounded-full border border-white/15 bg-black/35 px-3 py-1 text-xs text-white/75 backdrop-blur">
-        {isSpeaking ? 'Agent speaking' : 'Avatar idle'}
-      </span>
     </div>
   );
 }

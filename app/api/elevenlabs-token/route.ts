@@ -4,14 +4,25 @@ export const runtime = 'nodejs';
 const headers = { 'Cache-Control': 'no-store' };
 
 export async function POST(request: Request) {
-  // This experiment has no application authentication; never expose it in production.
-  if (process.env.NODE_ENV !== 'development') {
-    return NextResponse.json(
-      { error: 'This test is available in development only.' },
-      { status: 403, headers }
-    );
+  // Pin the browser origin when TLS terminates at a reverse proxy.
+  // Origin checks prevent cross-site browser requests; they are not user authentication.
+  let expectedOrigin = new URL(request.url).origin;
+  const appOrigin = process.env.APP_ORIGIN?.trim();
+  if (appOrigin) {
+    try {
+      const url = new URL(appOrigin);
+      if (!['http:', 'https:'].includes(url.protocol) || url.origin !== appOrigin) {
+        throw new Error('Invalid origin');
+      }
+      expectedOrigin = url.origin;
+    } catch {
+      return NextResponse.json(
+        { error: 'The application origin is not configured correctly.' },
+        { status: 503, headers }
+      );
+    }
   }
-  if (request.headers.get('origin') !== new URL(request.url).origin) {
+  if (request.headers.get('origin') !== expectedOrigin) {
     return NextResponse.json(
       { error: 'A same-origin request is required.' },
       { status: 403, headers }
@@ -22,8 +33,7 @@ export async function POST(request: Request) {
   if (!apiKey || !agentId) {
     return NextResponse.json(
       {
-        error:
-          'Set ELEVENLABS_API_KEY and ELEVENLABS_AGENT_ID in .env.local, then restart the app.',
+        error: 'The voice service is not configured. Contact the site administrator.',
       },
       { status: 503, headers }
     );

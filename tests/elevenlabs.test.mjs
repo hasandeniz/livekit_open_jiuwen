@@ -28,7 +28,10 @@ const request = (origin = 'http://localhost:3000') =>
 
 test('token endpoint restricts access, sanitizes failures, and forwards only the token', async (t) => {
   const previous = Object.fromEntries(
-    ['NODE_ENV', 'ELEVENLABS_API_KEY', 'ELEVENLABS_AGENT_ID'].map((key) => [key, process.env[key]])
+    ['NODE_ENV', 'ELEVENLABS_API_KEY', 'ELEVENLABS_AGENT_ID', 'APP_ORIGIN'].map((key) => [
+      key,
+      process.env[key],
+    ])
   );
   t.after(() => {
     for (const [key, value] of Object.entries(previous)) {
@@ -43,9 +46,13 @@ test('token endpoint restricts access, sanitizes failures, and forwards only the
   });
 
   process.env.NODE_ENV = 'production';
-  assert.equal((await POST(request())).status, 403);
-  process.env.NODE_ENV = 'development';
+  delete process.env.APP_ORIGIN;
   assert.equal((await POST(request('https://another-site.example'))).status, 403);
+  assert.equal(
+    (await POST(new Request('http://localhost:3000/api/elevenlabs-token', { method: 'POST' })))
+      .status,
+    403
+  );
   delete process.env.ELEVENLABS_API_KEY;
   delete process.env.ELEVENLABS_AGENT_ID;
   const missing = await POST(request());
@@ -61,6 +68,23 @@ test('token endpoint restricts access, sanitizes failures, and forwards only the
   const [url, options] = mockedFetch.mock.calls[0].arguments;
   assert.equal(url.searchParams.get('agent_id'), 'agent_test');
   assert.equal(options.headers['xi-api-key'], 'fake-secret');
+
+  process.env.APP_ORIGIN = 'https://assistant.example.com';
+  assert.equal((await POST(request('https://assistant.example.com'))).status, 200);
+  assert.equal((await POST(request())).status, 403);
+  assert.equal((await POST(request('https://another-site.example'))).status, 403);
+  for (const origin of [
+    'not-a-url',
+    'https://assistant.example.com/path',
+    'ftp://assistant.example.com',
+  ]) {
+    process.env.APP_ORIGIN = origin;
+    assert.equal((await POST(request())).status, 503);
+  }
+  delete process.env.APP_ORIGIN;
+  process.env.NODE_ENV = 'development';
+  assert.equal((await POST(request())).status, 200);
+  process.env.NODE_ENV = 'production';
 
   for (const status of [401, 403, 429, 500]) {
     mockedFetch.mock.mockImplementation(

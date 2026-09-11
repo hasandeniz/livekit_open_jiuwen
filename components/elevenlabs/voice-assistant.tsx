@@ -1,14 +1,15 @@
 'use client';
 
 import { type FormEvent, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { ConversationProvider, useConversation } from '@elevenlabs/react';
 import { SUPPORTED_LANGUAGES } from '@/app-config';
+import { BrandLogo } from '@/components/app/brand-logo';
 import { ElevenLabsAvatar } from '@/components/elevenlabs/elevenlabs-avatar';
+import { useDesign } from '@/lib/design/design-context';
 import { type TranscriptEntry, upsertTranscript } from '@/lib/elevenlabs/transcript';
 
-type Language = 'en' | 'tr' | 'ar' | 'es' | 'pt' | 'ru';
-const buttonClass =
-  'rounded-xl border border-(--glass-line) px-4 py-2.5 text-sm font-medium transition hover:bg-(--glass) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--aqua) disabled:cursor-not-allowed disabled:opacity-40';
+type Language = 'en' | 'tr';
 
 export function VoiceAssistant({ configured }: { configured: boolean }) {
   return (
@@ -19,51 +20,47 @@ export function VoiceAssistant({ configured }: { configured: boolean }) {
 }
 
 function VoiceSession({ configured }: { configured: boolean }) {
-  const [language, setLanguage] = useState<Language | ''>('');
+  const { design, setDesign } = useDesign();
+  const darkTheme = design === 'dark';
+  const [language, setLanguage] = useState<Language>('tr');
   const [messages, setMessages] = useState<TranscriptEntry[]>([]);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
-  const [conversationId, setConversationId] = useState('');
-  const [interruptions, setInterruptions] = useState(0);
-  const [levels, setLevels] = useState({ input: 0, output: 0 });
-  const [connectionMs, setConnectionMs] = useState<number | null>(null);
-  const [responseMs, setResponseMs] = useState<number | null>(null);
-  const startTime = useRef(0);
-  const transcriptTime = useRef<number | null>(null);
   const requestRef = useRef<AbortController | null>(null);
   const startingRef = useRef(false);
   const endOfMessages = useRef<HTMLDivElement>(null);
+  const followMessages = useRef(true);
 
   const conversation = useConversation({
-    onConnect: ({ conversationId: id }) => {
-      setConversationId(id);
-      setConnectionMs(Math.round(performance.now() - startTime.current));
+    onConnect: () => {
       startingRef.current = false;
       setStarting(false);
     },
     onDisconnect: () => {
       startingRef.current = false;
       setStarting(false);
-      transcriptTime.current = null;
     },
     onError: (message, context) => {
       // The SDK supplies the provider's actual failure message. Keep the
       // fallback for browser/transport failures where it may be absent.
       const detail = typeof message === 'string' && message.trim() ? message.trim() : '';
       const contextDetail =
-        context && typeof context === 'object' && 'message' in context && typeof context.message === 'string'
+        context &&
+        typeof context === 'object' &&
+        'message' in context &&
+        typeof context.message === 'string'
           ? context.message.trim()
           : '';
       setError(
-        detail || contextDetail ||
+        detail ||
+          contextDetail ||
           'The voice session failed. Check microphone permission, agent settings, language overrides, and custom LLM configuration, then reconnect.'
       );
       startingRef.current = false;
       setStarting(false);
     },
     onMessage: ({ role, message, event_id }) => {
-      if (role === 'user') transcriptTime.current = performance.now();
       const entry: TranscriptEntry = {
         id: event_id === undefined ? crypto.randomUUID() : `${role}:${event_id}`,
         role,
@@ -81,27 +78,10 @@ function VoiceSession({ configured }: { configured: boolean }) {
         })
       );
     },
-    onInterruption: () => setInterruptions((count) => count + 1),
-    onModeChange: ({ mode }) => {
-      if (mode === 'speaking' && transcriptTime.current !== null) {
-        setResponseMs(Math.round(performance.now() - transcriptTime.current));
-        transcriptTime.current = null;
-      }
-    },
   });
-  const {
-    status,
-    isSpeaking,
-    isMuted,
-    setMuted,
-    startSession,
-    endSession,
-    getInputVolume,
-    getOutputVolume,
-  } = conversation;
+  const { status, isMuted, setMuted, startSession, endSession } = conversation;
   const connected = status === 'connected';
   const busy = starting || status === 'connecting';
-
   useEffect(
     () => () => {
       requestRef.current?.abort();
@@ -109,31 +89,17 @@ function VoiceSession({ configured }: { configured: boolean }) {
     []
   );
   useEffect(() => {
-    endOfMessages.current?.scrollIntoView({ block: 'nearest' });
+    if (followMessages.current) endOfMessages.current?.scrollIntoView({ block: 'nearest' });
   }, [messages]);
-  useEffect(() => {
-    if (!connected) {
-      setLevels({ input: 0, output: 0 });
-      return;
-    }
-    const timer = window.setInterval(() => {
-      setLevels({ input: isMuted ? 0 : getInputVolume(), output: getOutputVolume() });
-    }, 100);
-    return () => window.clearInterval(timer);
-  }, [connected, isMuted, getInputVolume, getOutputVolume]);
-
   async function connect() {
     if (startingRef.current || connected || busy) return;
+    followMessages.current = true;
     startingRef.current = true;
     setStarting(true);
     setError(null);
-    setConnectionMs(null);
-    setResponseMs(null);
-    setConversationId('');
-    setInterruptions(0);
+
     setMessages([]);
-    transcriptTime.current = null;
-    startTime.current = performance.now();
+
     const controller = new AbortController();
     requestRef.current = controller;
     try {
@@ -187,194 +153,261 @@ function VoiceSession({ configured }: { configured: boolean }) {
     try {
       conversation.sendUserMessage(text);
       setMessages((current) => [...current, { id: crypto.randomUUID(), role: 'user', text }]);
-      transcriptTime.current = performance.now();
+
       setDraft('');
     } catch {
       setError('Could not send the message. Reconnect and try again.');
     }
   }
 
+  function clearConversation() {
+    setMessages([]);
+    setError(null);
+    followMessages.current = true;
+  }
+
   return (
-    <main className="relative mx-auto min-h-svh max-w-5xl px-5 pt-24 pb-16 text-(--ink)">
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="mb-2 font-mono text-xs tracking-widest text-(--aqua) uppercase">
-            Voice assistant · Local development
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight">Voice assistant</h1>
-          <p className="mt-2 text-sm text-(--ink-soft)">
-            Test speech, transcripts, and interruptions with your configured agent.
-          </p>
-        </div>
-      </div>
-
-      <section aria-label="Digital human" className="mb-6">
-        <ElevenLabsAvatar />
-      </section>
-
-      {!configured && (
-        <div
-          role="status"
-          className="mb-6 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5"
-        >
-          <h2 className="font-semibold">Connect your ElevenLabs agent</h2>
-          <p className="mt-2 text-sm">
-            Set <code>ELEVENLABS_API_KEY</code> and <code>ELEVENLABS_AGENT_ID</code> in{' '}
-            <code>.env.local</code>, then restart the app.
-          </p>
-          <p className="mt-2 text-sm">
-            Choose the voice and Huawei MaaS custom LLM in the ElevenLabs dashboard. Setup
-            instructions are in <code>README.md</code>.
-          </p>
-        </div>
-      )}
-
-      <section
-        aria-label="Conversation controls"
-        className="rounded-2xl border border-(--glass-line) bg-(--glass) p-5 backdrop-blur-xl"
-      >
-        <div className="flex flex-wrap items-center gap-3">
-          <span role="status" className="mr-auto text-sm font-medium">
-            {starting
-              ? 'Connecting…'
-              : connected
-                ? isSpeaking
-                  ? 'Agent speaking'
-                  : isMuted
-                    ? 'Connected · microphone muted'
-                    : 'Listening'
-                : status}
+    <main className="assistant-shell">
+      <header className="assistant-header">
+        <Link href="/" className="assistant-brand" aria-label="Ana sayfa">
+          <BrandLogo title="Huawei" className="h-8 w-auto" />
+          <span className="brand-divider" />
+          <span>
+            Digital Human<span className="brand-caption">Bir konuşmayla başlar.</span>
           </span>
-          <label className="flex items-center gap-2 text-sm">
-            Language
-            <select
-              value={language}
-              disabled={connected || busy}
-              onChange={(event) => setLanguage(event.target.value as Language | '')}
-              className="rounded-lg border border-(--glass-line) bg-(--scene-to) px-3 py-2"
-            >
-              <option value="">Agent default</option>
-              {SUPPORTED_LANGUAGES.map(({ code, label }) => (
-                <option key={code} value={code}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
+        </Link>
+        <div className="header-detail">
           <button
-            className={`${buttonClass} bg-(--aqua) text-black`}
-            disabled={!configured || connected || busy}
-            onClick={() => void connect()}
+            className="theme-toggle"
+            type="button"
+            aria-label={darkTheme ? 'Açık temaya geç' : 'Koyu temaya geç'}
+            title={darkTheme ? 'Açık temaya geç' : 'Koyu temaya geç'}
+            onClick={() => setDesign(darkTheme ? 'dark-green' : 'dark')}
           >
-            Start conversation
-          </button>
-          <button
-            className={buttonClass}
-            disabled={!connected}
-            aria-pressed={isMuted}
-            onClick={() => setMuted(!isMuted)}
-          >
-            {isMuted ? 'Unmute microphone' : 'Mute microphone'}
-          </button>
-          <button className={buttonClass} disabled={!connected && !busy} onClick={disconnect}>
-            {busy ? 'Cancel' : 'End conversation'}
+            <span aria-hidden="true">{darkTheme ? '☀' : '☾'}</span>
           </button>
         </div>
-        <p className="mt-4 text-xs text-(--ink-soft)">
-          Start enables your microphone. Speak while the agent talks to test interruptions. End the
-          conversation before changing language.
-        </p>
-        {error && (
-          <p
-            role="alert"
-            className="mt-4 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm"
-          >
-            {error}
-          </p>
-        )}
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <label className="text-xs">
-            Microphone level
-            <meter className="mt-2 block h-3 w-full" min={0} max={1} value={levels.input} />
-          </label>
-          <label className="text-xs">
-            Agent audio level
-            <meter className="mt-2 block h-3 w-full" min={0} max={1} value={levels.output} />
-          </label>
-        </div>
-      </section>
-
-      <section
-        aria-label="Transcript"
-        className="mt-6 overflow-hidden rounded-2xl border border-(--glass-line) bg-(--glass) backdrop-blur-xl"
-      >
-        <h2 className="border-b border-(--glass-line) px-5 py-4 font-semibold">Conversation</h2>
-        <div
-          role="log"
-          aria-label="Conversation transcript"
-          aria-live="polite"
-          className="h-80 space-y-4 overflow-y-auto p-5"
-        >
-          {messages.length === 0 && (
-            <p className="py-12 text-center text-sm text-(--ink-soft)">
-              Your speech and the agent’s replies will appear here.
-            </p>
-          )}
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`max-w-[90%] rounded-xl border border-(--glass-line) p-3 ${message.role === 'user' ? 'ml-auto bg-(--aqua)/10' : ''}`}
-            >
-              <p className="mb-1 text-xs font-semibold text-(--ink-soft)">
-                {message.role === 'user' ? 'You' : 'Agent'}
-                {message.corrected ? ' · corrected after interruption' : ''}
-              </p>
-              <p dir="auto" className="text-sm whitespace-pre-wrap">
-                {message.text || '(Response interrupted before speech)'}
-              </p>
+      </header>
+      <div className="assistant-workspace">
+        <section className="avatar-stage" aria-label="Dijital asistan">
+          <div className="stage-topline">
+            <label className="language-control">
+              <VoiceIcon kind="globe" />
+              <span className="sr-only">Görüşme dili</span>
+              <select
+                value={language}
+                disabled={connected || busy}
+                onChange={(event) => setLanguage(event.target.value as Language)}
+              >
+                {SUPPORTED_LANGUAGES.map(({ code, label }) => (
+                  <option key={code} value={code}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <span className={`session-pill ${connected ? 'is-live' : ''}`} role="status">
+              <span />
+              {connected ? 'Canlı görüşme' : busy ? 'Bağlanıyor…' : 'Hazır'}
+            </span>
+          </div>
+          <div className="avatar-spotlight" aria-hidden="true" />
+          <div className="avatar-presentation">
+            <ElevenLabsAvatar />
+          </div>
+        </section>
+        <section className="chat-panel" aria-label="Sohbet">
+          <header className="chat-header">
+            <div>
+              <span className="section-eyebrow">SANA EŞLİK EDEN BİR ASİSTAN</span>
+              <h2>Sohbetimiz</h2>
             </div>
-          ))}
-          <div ref={endOfMessages} />
-        </div>
-        <form onSubmit={send} className="flex gap-3 border-t border-(--glass-line) p-4">
-          <input
-            aria-label="Message"
-            placeholder="Or type a question…"
-            value={draft}
-            disabled={!connected}
-            onChange={(event) => setDraft(event.target.value)}
-            className="min-w-0 flex-1 rounded-xl border border-(--glass-line) bg-transparent px-3 py-2 text-sm"
-          />
-          <button type="submit" disabled={!connected || !draft.trim()} className={buttonClass}>
-            Send
-          </button>
-        </form>
-      </section>
-      <details className="mt-6 rounded-xl border border-(--glass-line) p-4 text-xs text-(--ink-soft)">
-        <summary className="cursor-pointer font-semibold">Session diagnostics</summary>
-        <dl className="mt-3 grid gap-2 sm:grid-cols-2">
-          <div>
-            <dt>Conversation ID</dt>
-            <dd className="break-all">{conversationId || '—'}</dd>
+            <div className="chat-header-actions">
+              <button
+                className="clear-chat-button"
+                type="button"
+                disabled={!messages.length && !error}
+                onClick={clearConversation}
+              >
+                <VoiceIcon kind="clear" />
+              </button>
+            </div>
+          </header>
+          {(!configured || error) && (
+            <div className="session-notice" role="alert">
+              <strong>
+                {!configured ? 'Asistan şu anda kullanılamıyor' : 'Bağlantıda bir sorun oluştu'}
+              </strong>
+              <p>{!configured ? 'Lütfen daha sonra tekrar dene.' : error}</p>
+              {error && (
+                <button onClick={() => setError(null)} aria-label="Bildirimi kapat">
+                  ×
+                </button>
+              )}
+            </div>
+          )}
+          <div
+            className="chat-history"
+            role="log"
+            aria-label="Sohbet mesajları"
+            aria-live="polite"
+            onScroll={(event) => {
+              const element = event.currentTarget;
+              followMessages.current =
+                element.scrollHeight - element.scrollTop - element.clientHeight < 80;
+            }}
+          >
+            {messages.length === 0 ? (
+              <div className="chat-empty">
+                <div className="empty-symbol">
+                  <VoiceIcon kind="chat" />
+                  <span aria-hidden="true">✦</span>
+                </div>
+                <h3>Ne konuşalım?</h3>
+                <p>
+                  Sesinle başla, dilersen yazarak devam et.
+                  <br />
+                  Konuşmamız burada görünecek.
+                </p>
+                <div className="conversation-hints">
+                  <span>Bir şey öğren</span>
+                  <span>Bir fikir keşfet</span>
+                  <span>Birlikte düşün</span>
+                </div>
+              </div>
+            ) : (
+              messages.map((message) => (
+                <article
+                  key={message.id}
+                  className={`chat-message ${message.role === 'user' ? 'from-user' : 'from-assistant'}`}
+                >
+                  <span className="message-author">
+                    {message.role === 'user' ? 'Sen' : 'Dijital asistan'}
+                  </span>
+                  <div className="message-bubble">
+                    <p dir="auto">{message.text || 'Yanıt kesildi.'}</p>
+                  </div>
+                  {message.corrected && <span className="message-note">Konuşma kesildi</span>}
+                </article>
+              ))
+            )}
+            <div ref={endOfMessages} />
           </div>
-          <div>
-            <dt>Connection time (includes permission prompt)</dt>
-            <dd>{connectionMs === null ? '—' : `${connectionMs} ms`}</dd>
+          <div className="composer-area">
+            <div className={`composer-layout ${connected || busy ? 'is-compact' : 'is-start'}`}>
+              <div className="stage-bottom chat-controls">
+                <div className="call-controls">
+                  {connected ? (
+                    <>
+                      <button
+                        className={`control-button mute-button ${isMuted ? 'is-muted' : ''}`}
+                        aria-pressed={isMuted}
+                        aria-label={isMuted ? 'Mikrofonu aç' : 'Sessize al'}
+                        title={isMuted ? 'Mikrofonu aç' : 'Sessize al'}
+                        onClick={() => setMuted(!isMuted)}
+                      >
+                        <VoiceIcon kind={isMuted ? 'muted' : 'mic'} />
+                      </button>
+                      <button
+                        className="control-button end-button"
+                        aria-label="Görüşmeyi bitir"
+                        title="Görüşmeyi bitir"
+                        onClick={disconnect}
+                      >
+                        <VoiceIcon kind="end" />
+                      </button>
+                    </>
+                  ) : busy ? (
+                    <button className="control-button secondary-button" onClick={disconnect}>
+                      Bağlanıyor… İptal et
+                    </button>
+                  ) : (
+                    <button
+                      className="control-button start-button"
+                      aria-label="Konuşmaya başla"
+                      title="Konuşmaya başla"
+                      disabled={!configured}
+                      onClick={() => void connect()}
+                    >
+                      <VoiceIcon kind="mic" />
+                      Konuşmaya başla
+                    </button>
+                  )}
+                </div>
+              </div>
+              <form onSubmit={send} className="chat-composer">
+                <input
+                  aria-label="Mesajın"
+                  placeholder={connected ? 'Aklından geçeni yaz…' : 'Önce bir görüşme başlat…'}
+                  value={draft}
+                  disabled={!connected}
+                  maxLength={4000}
+                  onChange={(event) => setDraft(event.target.value)}
+                />
+                <button
+                  type="submit"
+                  aria-label="Mesajı gönder"
+                  disabled={!connected || !draft.trim()}
+                >
+                  <VoiceIcon kind="send" />
+                </button>
+              </form>
+            </div>
+            <p className="composer-note">
+              Yapay zekâ yanıtları hata içerebilir. Önemli bilgileri doğrula.
+            </p>
           </div>
-          <div>
-            <dt>Last text/transcript → SDK speaking event</dt>
-            <dd>{responseMs === null ? '—' : `${responseMs} ms`}</dd>
-          </div>
-          <div>
-            <dt>Interruption events</dt>
-            <dd>{interruptions}</dd>
-          </div>
-        </dl>
-        <p className="mt-3">
-          Timing is an SDK event approximation, not measured end-of-speech to audible playback. The
-          model and voice are controlled by your ElevenLabs agent settings.
-        </p>
-      </details>
+        </section>
+      </div>
+      <footer className="assistant-footer">
+        <span>İnsan odaklı. Yapay zekâ destekli.</span>
+        <span>Huawei · Digital Human</span>
+      </footer>
     </main>
+  );
+}
+
+function VoiceIcon({
+  kind,
+}: {
+  kind: 'mic' | 'muted' | 'end' | 'chat' | 'send' | 'globe' | 'clear';
+}) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {kind === 'mic' || kind === 'muted' ? (
+        <>
+          <rect x="9" y="2" width="6" height="12" rx="3" />
+          <path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8" />
+          {kind === 'muted' && <path d="m3 3 18 18" />}
+        </>
+      ) : kind === 'send' ? (
+        <path d="M12 19V5m-6 6 6-6 6 6" />
+      ) : kind === 'chat' ? (
+        <path d="M20 11a8 8 0 0 1-8 8H5l-3 3V11a9 9 0 0 1 18 0ZM7 10h8M7 14h5" />
+      ) : kind === 'clear' ? (
+        <>
+          <path d="M4 7h16" />
+          <path d="M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" />
+        </>
+      ) : kind === 'globe' ? (
+        <>
+          <circle cx="12" cy="12" r="9" />
+          <ellipse cx="12" cy="12" rx="4" ry="9" />
+          <path d="M3 12h18" />
+        </>
+      ) : (
+        <path d="M3 15v-4c5-5 13-5 18 0v4h-5v-4a14 14 0 0 0-8 0v4Z" />
+      )}
+    </svg>
   );
 }

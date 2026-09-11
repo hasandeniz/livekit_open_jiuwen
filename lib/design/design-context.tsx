@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
-import { DESIGNS, type DesignName, resolveDesign, themeForDesign } from './design';
+import { DEFAULT_DESIGN, DESIGNS, type DesignName, resolveDesign, themeForDesign } from './design';
 
 export const DESIGN_STORAGE_KEY = 'voice-agent.design';
 
@@ -66,5 +66,5 @@ export function useDesign(): DesignContextValue {
   const ctx = useContext(DesignContext);
   if (ctx) return ctx;
   // Fallback when used outside a provider (keeps components from crashing).
-  return { design: 'dark-green', setDesign: () => {}, designs: DESIGNS };
+  return { design: DEFAULT_DESIGN, setDesign: () => {}, designs: DESIGNS };
 }

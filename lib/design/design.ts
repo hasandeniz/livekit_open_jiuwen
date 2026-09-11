@@ -9,7 +9,7 @@ export type DesignName = 'dark-green' | 'light' | 'dark';
 
 export const DESIGNS: readonly DesignName[] = ['dark-green', 'light', 'dark'];
 
-export const DEFAULT_DESIGN: DesignName = 'dark-green';
+export const DEFAULT_DESIGN: DesignName = 'dark';
 
 export function resolveDesign(value: string | undefined | null): DesignName {
   return value && (DESIGNS as readonly string[]).includes(value)

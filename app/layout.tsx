@@ -1,10 +1,9 @@
 import localFont from 'next/font/local';
-import { BrandLogo } from '@/components/app/brand-logo';
-import { SceneBackground } from '@/components/app/scene-background';
 import { ThemeProvider } from '@/components/app/theme-provider';
 import { resolveDesign, themeForDesign } from '@/lib/design/design';
 import { DesignProvider } from '@/lib/design/design-context';
 import { cn } from '@/lib/shadcn/utils';
+import '@/styles/assistant.css';
 import '@/styles/globals.css';
 
 const publicSans = localFont({
@@ -64,7 +63,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 
   return (
     <html
-      lang="en"
+      lang="tr"
       data-design={design}
       suppressHydrationWarning
       className={cn(
@@ -82,7 +81,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
               "(function(){try{var d=localStorage.getItem('voice-agent.design');if(d==='dark-green'||d==='light'||d==='dark'){document.documentElement.dataset.design=d;}}catch(e){}})();",
           }}
         />
-        <title>Huawei</title>
+        <title>Digital Human · Huawei</title>
         <meta name="description" content="ElevenLabs voice assistant" />
       </head>
       <body className="overflow-x-hidden">
@@ -92,18 +91,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           enableSystem={false}
           disableTransitionOnChange
         >
-          <DesignProvider initialDesign={design}>
-            <SceneBackground />
-            {/* Huawei logo (top-left). The wordmark follows the design palette
-                (--ink) while the flower keeps its brand red — see BrandLogo. */}
-            <div className="fixed top-5 left-6 z-40 text-(--ink)">
-              <BrandLogo title="Huawei" className="block h-9 w-auto" />
-            </div>
-            {children}
-            <footer className="font-chakra pointer-events-none fixed inset-x-0 bottom-2 z-30 text-center text-[10px] tracking-[0.12em] text-(--ink-soft) opacity-70">
-              ©2026 Huawei Device Co., Ltd. Bütün hakları saklıdır.
-            </footer>
-          </DesignProvider>
+          <DesignProvider initialDesign={design}>{children}</DesignProvider>
         </ThemeProvider>
       </body>
     </html>

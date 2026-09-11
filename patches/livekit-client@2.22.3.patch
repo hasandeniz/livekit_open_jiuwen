@@ -1,0 +1,35 @@
+diff --git a/dist/livekit-client.esm.mjs b/dist/livekit-client.esm.mjs
+index 0bdf98540d93d7deb581737dca7afb299308d307..96397c3505b51c666c3cea26263dbe05c91cb376 100644
+--- a/dist/livekit-client.esm.mjs
++++ b/dist/livekit-client.esm.mjs
+@@ -18764,6 +18764,10 @@ class SignalClient {
+           const resp = parseSignalResponse(value);
+           this.handleSignalResponse(resp);
+         } catch (e) {
++          // Ignore reader failures from intentional shutdown or a replaced transport.
++          if (attemptId !== this.attemptId || this.lifecycleState === 'disconnecting' || this.lifecycleState === 'closed') {
++            break;
++          }
+           this.log.error("error reading from signal stream", {
+             error: e
+           });
+diff --git a/src/api/SignalClient.ts b/src/api/SignalClient.ts
+index 72f58d684c5d6ca0f2e17e204463d924a53242be..7b303738211f9efa0f7ed43dccd8182ac1883937 100644
+--- a/src/api/SignalClient.ts
++++ b/src/api/SignalClient.ts
+@@ -680,6 +680,15 @@ export class SignalClient {
+         const resp = parseSignalResponse(value);
+         this.handleSignalResponse(resp);
+       } catch (e) {
++        // A reader can reject after local teardown or transport replacement.
++        // Only the current, active transport should report a connection failure.
++        if (
++          attemptId !== this.attemptId ||
++          this.lifecycleState === 'disconnecting' ||
++          this.lifecycleState === 'closed'
++        ) {
++          break;
++        }
+         this.log.error(`error reading from signal stream`, { error: e });
+         await this.handleOnClose('error in reading loop', attemptId);
+         break;
