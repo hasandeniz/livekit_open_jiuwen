@@ -324,7 +324,7 @@
 
 .elevenlabs-avatar-canvas > canvas {
   /* Camera framing controls size; keep the rendered image unstretched. */
-  transform: scale(1);
+  transform: scale(1.2);
   transform-origin: center;
 }
 

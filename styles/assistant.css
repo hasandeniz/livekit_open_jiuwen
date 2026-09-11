@@ -126,7 +126,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 0 -10px;
+  margin: 0 0 -50px;
   pointer-events: none;
   overflow: hidden;
 }
@@ -261,8 +261,8 @@
 .stage-topline .language-control select {
   font-size: 11px;
 }
-.language-control select:focus,
-.language-control select:focus-visible {
+.assistant-shell .language-control select:focus,
+.assistant-shell .language-control select:focus-visible {
   outline: none;
   box-shadow: none;
 }
