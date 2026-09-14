@@ -49,6 +49,16 @@ Voice sessions work in development and production when the server credentials ar
 
 ## Production deployment
 
+### Docker
+
+The repository includes a production `Dockerfile` and `docker-compose.yml`. Set the required values in the shell (or a root `.env` file that is excluded from the image), then run:
+
+```sh
+docker compose up --build -d
+```
+
+The app is available at `http://localhost:3000`. Compose passes `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`, and `APP_ORIGIN` into the server. The image uses Next.js standalone output and includes the generated local XLSX WASM asset. Stop it with `docker compose down`.
+
 Use Node.js 22+ and the pinned pnpm 9.15.9. Include `patches/`, `pnpm-lock.yaml`, `vendor/`, and `public/` in the deployment source. The LiveKit patch is applied automatically during `pnpm install`; no separate LiveKit server is needed.
 
 Set `ELEVENLABS_API_KEY` and `ELEVENLABS_AGENT_ID` in the server environment. For an HTTPS reverse proxy, set `APP_ORIGIN` to the exact public origin, for example `https://assistant.example.com` (no trailing slash or path). This keeps the token endpoint's browser-origin check working when the internal server uses HTTP. Do not derive this value from untrusted forwarded headers.
