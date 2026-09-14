@@ -18,3 +18,5 @@ build/
 *.tsbuildinfo
 next-env.d.ts
 .pnpm-patch/
+
+/public/wasm/duke_sheets_wasm_bg.wasm

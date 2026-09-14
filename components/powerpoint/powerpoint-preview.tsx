@@ -2,6 +2,7 @@
 
 import { Component, type FormEvent, type ReactNode, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { type OfficeDocument, detectOfficeKind, officeFilename } from '@/lib/office-document';
 
 const SlidePreview = dynamic(() => import('./slide-preview'), {
   ssr: false,
@@ -12,13 +13,29 @@ const SlidePreview = dynamic(() => import('./slide-preview'), {
   ),
 });
 
-export type PresentationDocument = { id: string; content: Uint8Array; name: string };
+const WordPreview = dynamic(() => import('./word-preview'), {
+  ssr: false,
+  loading: () => (
+    <p className="pptx-message" role="status">
+      Önizleyici yükleniyor…
+    </p>
+  ),
+});
 
-export function PowerPointUrlDialog({
+const ExcelPreview = dynamic(() => import('./excel-preview'), {
+  ssr: false,
+  loading: () => (
+    <p className="pptx-message" role="status">
+      Önizleyici yükleniyor…
+    </p>
+  ),
+});
+
+export function DocumentUrlDialog({
   onLoaded,
   onClose,
 }: {
-  onLoaded: (document: PresentationDocument) => void;
+  onLoaded: (document: OfficeDocument) => void;
   onClose: () => void;
 }) {
   const [url, setUrl] = useState('');
@@ -68,34 +85,24 @@ export function PowerPointUrlDialog({
       if (!response.ok) throw new Error(`Dosya indirilemedi (HTTP ${response.status}).`);
       if (response.headers.get('content-type')?.includes('text/html')) {
         throw new Error(
-          'Bu bağlantı bir web sayfası açıyor. Doğrudan .pptx dosyasının bağlantısını kullan.'
+          'Bu bağlantı bir web sayfası açıyor. Doğrudan .pptx, .docx veya .xlsx dosyasının bağlantısını kullan.'
         );
       }
       const content = new Uint8Array(await response.arrayBuffer());
-      if (
-        content.length < 4 ||
-        content[0] !== 0x50 ||
-        content[1] !== 0x4b ||
-        content[2] !== 3 ||
-        content[3] !== 4
-      ) {
-        throw new Error(
-          'Geçerli bir .pptx dosyası bulunamadı. Doğrudan dosya bağlantısını kullan.'
-        );
-      }
+      const kind = await detectOfficeKind(content);
       if (controller.signal.aborted) return;
-      const segment = source.pathname.split('/').pop() || 'Sunum.pptx';
+      const segment = source.pathname.split('/').pop() || 'Dosya';
       let name = segment;
       try {
         name = decodeURIComponent(segment);
       } catch {
         /* Keep the original filename. */
       }
-      onLoaded({ id: crypto.randomUUID(), content, name });
+      onLoaded({ id: crypto.randomUUID(), content, kind, name: officeFilename(name, kind) });
       onClose();
     } catch (cause) {
       if (!controller.signal.aborted) {
-        setError(cause instanceof Error ? cause.message : 'Sunum yüklenemedi.');
+        setError(cause instanceof Error ? cause.message : 'Dosya yüklenemedi.');
       } else if (controller.signal.reason === 'timeout') {
         setError('İndirme zaman aşımına uğradı. Tekrar dene.');
       }
@@ -117,15 +124,15 @@ export function PowerPointUrlDialog({
     >
       <header className="pptx-header">
         <div>
-          <span className="section-eyebrow">POWERPOINT</span>
-          <h2 id="pptx-heading">Sunum ekle</h2>
+          <span className="section-eyebrow">POWERPOINT / WORD / EXCEL</span>
+          <h2 id="pptx-heading">Dosya ekle</h2>
         </div>
-        <button type="button" onClick={clear} aria-label="Sunum eklemeyi kapat">
+        <button type="button" onClick={clear} aria-label="Dosya eklemeyi kapat">
           ×
         </button>
       </header>
       <form className="pptx-url-form" onSubmit={(event) => void load(event)}>
-        <label htmlFor="pptx-url">PowerPoint dosya bağlantısı</label>
+        <label htmlFor="pptx-url">PowerPoint, Word veya Excel dosya bağlantısı</label>
         <div className="pptx-url-controls">
           <input
             id="pptx-url"
@@ -139,7 +146,7 @@ export function PowerPointUrlDialog({
             aria-describedby="pptx-url-help"
           />
           <button type="submit" disabled={!url.trim() || loading}>
-            {loading ? 'Yükleniyor…' : 'Sunumu ekle'}
+            {loading ? 'Yükleniyor…' : 'Dosyayı ekle'}
           </button>
           {loading && (
             <button type="button" onClick={clear}>
@@ -148,7 +155,8 @@ export function PowerPointUrlDialog({
           )}
         </div>
         <p id="pptx-url-help">
-          Doğrudan .pptx bağlantısını yapıştır. Dosya sunucusu tarayıcıdan erişime izin vermeli.
+          Doğrudan .pptx, .docx veya .xlsx bağlantısını yapıştır. Dosya sunucusu tarayıcıdan erişime
+          izin vermeli.
         </p>
       </form>
       {error && (
@@ -158,23 +166,29 @@ export function PowerPointUrlDialog({
       )}
       {loading && (
         <p className="pptx-message" role="status">
-          Sunum indiriliyor…
+          Dosya indiriliyor…
         </p>
       )}
     </dialog>
   );
 }
 
-export function PowerPointPreview({
+export function DocumentPreview({
   document,
   onClose,
 }: {
-  document: PresentationDocument;
+  document: OfficeDocument;
   onClose: () => void;
 }) {
   return (
     <PreviewErrorBoundary key={document.id} onClose={onClose}>
-      <SlidePreview content={document.content} name={document.name} onClose={onClose} />
+      {document.kind === 'xlsx' ? (
+        <ExcelPreview content={document.content} name={document.name} onClose={onClose} />
+      ) : document.kind === 'docx' ? (
+        <WordPreview content={document.content} name={document.name} onClose={onClose} />
+      ) : (
+        <SlidePreview content={document.content} name={document.name} onClose={onClose} />
+      )}
     </PreviewErrorBoundary>
   );
 }
@@ -193,10 +207,10 @@ class PreviewErrorBoundary extends Component<
     return this.state.failed ? (
       <div className="pptx-message">
         <p className="pptx-error" role="alert">
-          Önizleme açılamadı. Tekrar dene veya başka bir .pptx bağlantısı kullan.
+          Önizleme açılamadı. Tekrar dene veya başka bir .pptx, .docx veya .xlsx bağlantısı kullan.
         </p>
         <button type="button" onClick={this.props.onClose}>
-          Sunumu kapat
+          Önizlemeyi kapat
         </button>
       </div>
     ) : (

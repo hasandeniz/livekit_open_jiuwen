@@ -162,13 +162,6 @@
   font-weight: 650;
   letter-spacing: -0.4px;
 }
-.header-detail {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  color: #63726c;
-  font-size: 12px;
-}
 .assistant-workspace {
   display: grid;
   grid-template-columns: minmax(0, 0.8fr) minmax(420px, 1.2fr);
@@ -558,14 +551,20 @@
   height: 18px;
 }
 .theme-toggle {
-  width: 34px;
-  height: 34px;
+  width: 34px !important;
+  height: 34px !important;
+  flex: 0 0 34px;
+  aspect-ratio: 1;
   display: grid;
   place-items: center;
+  padding: 0;
   border: 1px solid #dfe6dc;
-  border-radius: 50%;
+  border-radius: 999px !important;
+  clip-path: circle(50% at 50% 50%);
+  overflow: hidden;
+  appearance: none;
   color: #62776b;
-  background: #fbfcf9;
+  background: #1e2b23;
   font-size: 16px;
   cursor: pointer;
   transition:
@@ -574,7 +573,7 @@
     border-color 0.18s;
 }
 .theme-toggle:hover {
-  background: #eef3e9;
+  background: #28392d;
   color: #315844;
 }
 
@@ -582,7 +581,6 @@
   background: #101713;
   color: #e7efe8;
 }
-[data-design='dark'] .header-detail,
 [data-design='dark'] .assistant-workspace {
   border-color: #2c3b32;
   background: #17221c;
@@ -606,10 +604,22 @@
   color: #a6b9ab;
   background: #1e2b23;
 }
+[data-design='dark'] .clear-chat-button {
+  background: #1e2b23;
+}
 [data-design='dark'] .clear-chat-button:hover:not(:disabled),
 [data-design='dark'] .theme-toggle:hover {
   background: #28392d;
   color: #d9f2c9;
+}
+[data-design='light'] .theme-toggle {
+  background: #fbfcf9;
+}
+[data-design='light'] .theme-toggle:hover {
+  background: #eef3e9;
+}
+[data-design='dark'] .clear-chat-button:hover:not(:disabled) {
+  background: #28392d;
 }
 [data-design='dark'] .chat-history {
   scrollbar-color: #52685a transparent;
@@ -930,7 +940,7 @@
   .assistant-brand svg {
     height: 26px;
   }
-  .header-detail {
+  .theme-toggle {
     display: none;
   }
   .assistant-workspace {
@@ -1365,4 +1375,44 @@
 }
 .has-presentation .chat-empty h3 {
   font-size: 20px;
+}
+.presentation-stage .docx-navigation .pptx-filename {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Workbook grid owns scrolling within the existing document panel. */
+.presentation-stage .xlsx-viewport {
+  overflow: hidden;
+}
+.xlsx-sheet-select {
+  appearance: none;
+  height: 40px;
+  max-width: min(240px, 60vw);
+  min-width: 0;
+  padding: 0 38px 0 12px;
+  border: 1px solid currentColor;
+  border-radius: 10px;
+  color: inherit;
+  background: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='m4 6 4 4 4-4' stroke='%23dfe9e3' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  font: inherit;
+  font-size: 12px;
+  outline: none !important;
+  box-shadow: none !important;
+}
+.xlsx-sheet-select:focus,
+.xlsx-sheet-select:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.xlsx-sheet-select option {
+  color: #243b36;
+  background: white;
+}
+[data-design='light'] .xlsx-sheet-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='m4 6 4 4 4-4' stroke='%23335548' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }

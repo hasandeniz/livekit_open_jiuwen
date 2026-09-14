@@ -15,13 +15,17 @@ pnpm dev
 
 Open http://localhost:3000. If .env.local already exists, edit it instead of copying over it. Run only one dev server in this folder.
 
-## PowerPoint preview
+## PowerPoint, Word and Excel preview
 
-Choose **Sunum ekle** in the chat header to enter a direct HTTP(S) `.pptx` URL. After downloading, a file card appears in the conversation area. Choose **Sunumu aç** to open the presentation alongside the chat; the avatar becomes compact above the chat. Closing the preview restores the original layout, preserving the conversation, voice session and last viewed slide. On mobile, **Sunum / Sohbet** switches the visible content while the call controls and message composer stay available. The preview toolbar provides slide navigation and a close control. It works without starting a voice session. Downloads can be cancelled and time out after 60 seconds. The current presentation stays available if adding a replacement fails or is cancelled.
+Choose **Dosya ekle** in the chat header to enter a direct HTTP(S) `.pptx`, `.docx` or `.xlsx` URL. After downloading, a file card appears in the conversation area. Choose **Sunumu aç** to open the presentation alongside the chat; the avatar becomes compact above the chat. Closing the preview restores the original layout, preserving the conversation, voice session and last viewed slide. On mobile, **Sunum / Sohbet** switches the visible content while the call controls and message composer stay available. The preview toolbar provides slide navigation and a close control. It works without starting a voice session. Downloads can be cancelled and time out after 60 seconds. The current presentation stays available if adding a replacement fails or is cancelled.
 
 The file is fetched in the browser without credentials. Its server must allow the frontend origin via CORS (or serve the file from the same origin). Use a direct download or signed URL, not an Office/Drive sharing page. For local testing, place a presentation in `public/` and enter `http://localhost:3000/filename.pptx`.
 
-A two-slide smoke-test file is included at `http://localhost:3000/pptx-preview-test.pptx`.
+Smoke-test files are included at `http://localhost:3000/pptx-preview-test.pptx` (two slides) and `http://localhost:3000/docx-preview-test.docx` (two pages).
+
+Word files use `docx-preview` in the same workspace. Choose **Belgeyi aç** on the Word file card. Pages fit the panel width and scroll vertically; the toolbar has only a close button. The original file can be downloaded from its card. Document styles are isolated from the chat in a shadow root. Embedded HTML chunks are disabled. Browser rendering may differ from Microsoft Word, and page boundaries depend on the breaks stored in the file.
+
+The downloaded Office archive determines the format, so signed URLs and URLs without filename extensions are supported. Invalid archives and unsupported formats are rejected before replacing the current document. Both preview libraries load on demand.
 
 The implementation uses [pptx-react-viewer](https://github.com/ChristopherVR/pptx-viewer/) with `SlideCanvas` and `useViewerBuildingBlocks`, editing and autosave disabled, and only custom slide navigation. The viewer is loaded on demand in the browser. `components/powerpoint/slide-preview.tsx` accepts presentation bytes and a filename so the future OpenJiuwen/ElevenLabs tool can reuse it. Tool calling is not wired yet.
 
@@ -74,3 +78,11 @@ Stop the dev server before building: both use .next. Live microphone, interrupti
 The ElevenLabs SDK retains its own transitive LiveKit transport dependency. LICENSE retains attribution for reused starter code.
 
 `patches/livekit-client@2.22.3.patch` fixes shutdown logging in the browser ESM transport: pending reads from a locally closed or replaced connection no longer report a session failure. Active connection failures still report normally. pnpm applies the patch on install; review it when upgrading the SDK. The CommonJS bundle is unchanged.
+
+`patches/docx-preview@0.4.0.patch` fixes section pagination in the browser ESM and CommonJS bundles. Page-size/orientation changes and next-page section boundaries start a new page before the incoming section; continuous sections can remain together. This does not add automatic Word-style overflow pagination or blank-page insertion for odd/even section parity. Regression tests exercise both installed bundles. Review the patch when upgrading `docx-preview`.
+
+Excel workbooks use `@extend-ai/react-xlsx` in the same document panel, with a sheet selector in the existing header and the original download on the file card. The viewer receives downloaded bytes, uses local worker/WASM parsing, and is explicitly read-only (including paste, editing, and row/column resizing). The default library toolbar and gesture zoom are disabled. Supported workbook formatting, charts, and images use the library's renderer; Excel fidelity depends on its supported features. The current parse limit is 25 MB.
+
+`node scripts/copy-xlsx-wasm.mjs` copies the installed package's WASM binary to `public/wasm/duke_sheets_wasm_bg.wasm`. This runs on install, development startup, and production build. Deploy that generated public asset alongside the Next.js output; no CDN, Office service, or PDF conversion is used. The worker receives an absolute URL on the frontend's own origin. The generated binary is ignored by Git to avoid retaining stale package assets.
+
+Use `http://localhost:3000/xlsx-preview-test.xlsx` for a two-sheet test workbook with a merged, colored heading, number formats, and a formula. Closing and reopening preserves the selected sheet. XLSX detection uses archive contents, including for signed URLs without filename extensions.

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
-import { DEFAULT_DESIGN, DESIGNS, type DesignName, resolveDesign, themeForDesign } from './design';
+import { DEFAULT_DESIGN, type DesignName, themeForDesign } from './design';
 
 export const DESIGN_STORAGE_KEY = 'voice-agent.design';
 
@@ -15,10 +15,8 @@ interface DesignContextValue {
 const DesignContext = createContext<DesignContextValue | null>(null);
 
 /**
- * Owns the active visual design at runtime. The initial value comes from the
- * `DESIGN` env var (rendered server-side as `<html data-design>`); a stored
- * choice overrides it. Switching updates `<html data-design>`, the next-themes
- * light/dark class (for shadcn tokens and `dark:` variants), and localStorage.
+ * Owns the active visual design at runtime. The product deliberately exposes
+ * one fixed dark palette, while retaining this context for shared consumers.
  */
 export function DesignProvider({
   initialDesign,
@@ -28,17 +26,9 @@ export function DesignProvider({
   children: React.ReactNode;
 }) {
   const { setTheme } = useTheme();
-  const [design, setDesignState] = useState<DesignName>(initialDesign);
-
-  // Adopt a stored override after mount (env value stays the default).
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(DESIGN_STORAGE_KEY);
-      if (stored) setDesignState(resolveDesign(stored));
-    } catch {
-      // localStorage unavailable — keep the env default.
-    }
-  }, []);
+  const [design] = useState<DesignName>(
+    initialDesign === DEFAULT_DESIGN ? initialDesign : DEFAULT_DESIGN
+  );
 
   // Apply the design: palette via data-design, light/dark class via next-themes.
   useEffect(() => {
@@ -46,17 +36,10 @@ export function DesignProvider({
     setTheme(themeForDesign(design));
   }, [design, setTheme]);
 
-  const setDesign = (next: DesignName) => {
-    setDesignState(next);
-    try {
-      window.localStorage.setItem(DESIGN_STORAGE_KEY, next);
-    } catch {
-      // Ignore persistence failures.
-    }
-  };
+  const setDesign = () => {};
 
   return (
-    <DesignContext.Provider value={{ design, setDesign, designs: DESIGNS }}>
+    <DesignContext.Provider value={{ design, setDesign, designs: [DEFAULT_DESIGN] }}>
       {children}
     </DesignContext.Provider>
   );
@@ -66,5 +49,5 @@ export function useDesign(): DesignContextValue {
   const ctx = useContext(DesignContext);
   if (ctx) return ctx;
   // Fallback when used outside a provider (keeps components from crashing).
-  return { design: DEFAULT_DESIGN, setDesign: () => {}, designs: DESIGNS };
+  return { design: DEFAULT_DESIGN, setDesign: () => {}, designs: [DEFAULT_DESIGN] };
 }

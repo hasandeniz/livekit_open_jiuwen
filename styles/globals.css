@@ -3,6 +3,29 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* App-wide focus policy, including native selects that match :focus-visible
+   after a mouse click. Preserve component borders and selection styling. */
+html:not([data-focus-input='keyboard']) :focus {
+  outline: none !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+}
+
+html[data-focus-input='keyboard'] :focus-visible {
+  outline: 2px solid var(--ring) !important;
+  outline-offset: 3px;
+}
+
+/* Native controls (especially select menus) may paint their own focus ring
+   without honoring :focus-visible. Pointer activation should remain ring-free
+   everywhere in the product. */
+html:not([data-focus-input='keyboard']) :focus,
+html:not([data-focus-input='keyboard']) :focus-visible,
+html:not([data-focus-input='keyboard']) select:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);

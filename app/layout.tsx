@@ -1,6 +1,7 @@
 import localFont from 'next/font/local';
+import { FocusBehavior } from '@/components/app/focus-behavior';
 import { ThemeProvider } from '@/components/app/theme-provider';
-import { resolveDesign, themeForDesign } from '@/lib/design/design';
+import { DEFAULT_DESIGN, themeForDesign } from '@/lib/design/design';
 import { DesignProvider } from '@/lib/design/design-context';
 import { cn } from '@/lib/shadcn/utils';
 import '@/styles/assistant.css';
@@ -55,10 +56,8 @@ interface RootLayoutProps {
 }
 
 export default async function RootLayout({ children }: RootLayoutProps) {
-  // Default design comes from the DESIGN env var (runtime, server-side); a
-  // stored in-UI choice overrides it on the client (see DesignProvider + the
-  // no-flash script below).
-  const design = resolveDesign(process.env.DESIGN);
+  // The product uses one fixed dark theme.
+  const design = DEFAULT_DESIGN;
   const initialTheme = themeForDesign(design);
 
   return (
@@ -73,18 +72,17 @@ export default async function RootLayout({ children }: RootLayoutProps) {
       )}
     >
       <head>
-        {/* Apply a stored design choice before paint to avoid a flash of the
-            env-default palette. next-themes handles the light/dark class. */}
+        {/* Set the fixed palette before paint. */}
         <script
           dangerouslySetInnerHTML={{
-            __html:
-              "(function(){try{var d=localStorage.getItem('voice-agent.design');if(d==='dark-green'||d==='light'||d==='dark'){document.documentElement.dataset.design=d;}}catch(e){}})();",
+            __html: "document.documentElement.dataset.design='dark';",
           }}
         />
         <title>Digital Human · Huawei</title>
         <meta name="description" content="ElevenLabs voice assistant" />
       </head>
       <body className="overflow-x-hidden">
+        <FocusBehavior />
         <ThemeProvider
           attribute="class"
           defaultTheme={initialTheme}

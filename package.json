@@ -3,21 +3,25 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
+    "dev": "node scripts/copy-xlsx-wasm.mjs && next dev --turbopack",
+    "build": "node scripts/copy-xlsx-wasm.mjs && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.mjs",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "postinstall": "node scripts/copy-xlsx-wasm.mjs"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.76",
     "@elevenlabs/react": "^1.15.2",
+    "@extend-ai/react-xlsx": "^0.16.4",
     "ai": "^7.0.0",
     "axios": "^1.7.9",
     "clsx": "^2.1.1",
+    "docx-preview": "^0.4.0",
     "furenderkit": "file:vendor/furenderkit-1.7.1.tgz",
+    "jszip": "^3.10.2",
     "next": "15.5.14",
     "next-themes": "^0.4.6",
     "pptx-react-viewer": "3.16.2",
@@ -43,7 +47,8 @@
   "packageManager": "pnpm@9.15.9",
   "pnpm": {
     "patchedDependencies": {
-      "livekit-client@2.22.3": "patches/livekit-client@2.22.3.patch"
+      "livekit-client@2.22.3": "patches/livekit-client@2.22.3.patch",
+      "docx-preview@0.4.0": "patches/docx-preview@0.4.0.patch"
     }
   }
 }

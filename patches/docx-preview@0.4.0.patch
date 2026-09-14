@@ -1,0 +1,35 @@
+diff --git a/dist/docx-preview.js b/dist/docx-preview.js
+index 9abd1329ce2476c4199b0ad439217658bb4d1697..301ddf83ca0c9fe87dffa0b6e1777ab218a7bca9 100644
+--- a/dist/docx-preview.js
++++ b/dist/docx-preview.js
+@@ -3262,8 +3262,11 @@
+             let prev;
+             const result = [current];
+             for (let s of sections) {
++                if (current.length && (this.isPageBreakSection(prev, s.sectProps)
++                    || ["nextPage", "evenPage", "oddPage"].includes(s.sectProps.type ?? "nextPage")))
++                    result.push(current = []);
+                 current.push(s);
+-                if (this.options.ignoreLastRenderedPageBreak || s.pageBreak || this.isPageBreakSection(prev, s.sectProps))
++                if (this.options.ignoreLastRenderedPageBreak || s.pageBreak)
+                     result.push(current = []);
+                 prev = s.sectProps;
+             }
+diff --git a/dist/docx-preview.mjs b/dist/docx-preview.mjs
+index 68d59f26015b7dbb1dd69a9a7ee915e31bae07d5..a3c25f51f5844aa258f1ecbc046bd87bb8f88f3b 100644
+--- a/dist/docx-preview.mjs
++++ b/dist/docx-preview.mjs
+@@ -3258,8 +3258,11 @@ class HtmlRenderer {
+         let prev;
+         const result = [current];
+         for (let s of sections) {
+-            current.push(s);
+-            if (this.options.ignoreLastRenderedPageBreak || s.pageBreak || this.isPageBreakSection(prev, s.sectProps))
++            if (current.length && (this.isPageBreakSection(prev, s.sectProps)
++                    || ["nextPage", "evenPage", "oddPage"].includes(s.sectProps.type ?? "nextPage")))
++                    result.push(current = []);
++                current.push(s);
++            if (this.options.ignoreLastRenderedPageBreak || s.pageBreak)
+                 result.push(current = []);
+             prev = s.sectProps;
+         }

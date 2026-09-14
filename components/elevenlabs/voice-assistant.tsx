@@ -6,13 +6,9 @@ import { ConversationProvider, useConversation } from '@elevenlabs/react';
 import { SUPPORTED_LANGUAGES } from '@/app-config';
 import { BrandLogo } from '@/components/app/brand-logo';
 import { ElevenLabsAvatar } from '@/components/elevenlabs/elevenlabs-avatar';
-import {
-  PowerPointPreview,
-  PowerPointUrlDialog,
-  type PresentationDocument,
-} from '@/components/powerpoint/powerpoint-preview';
-import { useDesign } from '@/lib/design/design-context';
+import { DocumentPreview, DocumentUrlDialog } from '@/components/powerpoint/powerpoint-preview';
 import { type TranscriptEntry, upsertTranscript } from '@/lib/elevenlabs/transcript';
+import { type OfficeDocument, officeFilename, officeMimeTypes } from '@/lib/office-document';
 
 type Language = 'en' | 'tr';
 
@@ -25,8 +21,6 @@ export function VoiceAssistant({ configured }: { configured: boolean }) {
 }
 
 function VoiceSession({ configured }: { configured: boolean }) {
-  const { design, setDesign } = useDesign();
-  const darkTheme = design === 'dark';
   const [language, setLanguage] = useState<Language>('tr');
   const [messages, setMessages] = useState<TranscriptEntry[]>([]);
   const [draft, setDraft] = useState('');
@@ -36,7 +30,7 @@ function VoiceSession({ configured }: { configured: boolean }) {
   const startingRef = useRef(false);
   const endOfMessages = useRef<HTMLDivElement>(null);
   const followMessages = useRef(true);
-  const [presentation, setPresentation] = useState<PresentationDocument | null>(null);
+  const [presentation, setPresentation] = useState<OfficeDocument | null>(null);
   const [presentationOpen, setPresentationOpen] = useState(false);
   const [urlDialogOpen, setUrlDialogOpen] = useState(false);
   const [mobileView, setMobileView] = useState<'presentation' | 'chat'>('presentation');
@@ -62,14 +56,12 @@ function VoiceSession({ configured }: { configured: boolean }) {
     if (!presentation) return;
     const bytes = new Uint8Array(presentation.content);
     const blob = new Blob([bytes.buffer], {
-      type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      type: officeMimeTypes[presentation.kind],
     });
     const href = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = href;
-    anchor.download = presentation.name.toLowerCase().endsWith('.pptx')
-      ? presentation.name
-      : `${presentation.name}.pptx`;
+    anchor.download = officeFilename(presentation.name, presentation.kind);
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -216,17 +208,6 @@ function VoiceSession({ configured }: { configured: boolean }) {
         <Link href="/" className="assistant-brand" aria-label="Ana sayfa">
           <BrandLogo title="Huawei" className="h-8 w-auto" />
         </Link>
-        <div className="header-detail">
-          <button
-            className="theme-toggle"
-            type="button"
-            aria-label={darkTheme ? 'Açık temaya geç' : 'Koyu temaya geç'}
-            title={darkTheme ? 'Açık temaya geç' : 'Koyu temaya geç'}
-            onClick={() => setDesign(darkTheme ? 'dark-green' : 'dark')}
-          >
-            <span aria-hidden="true">{darkTheme ? '☀' : '☾'}</span>
-          </button>
-        </div>
       </header>
       <div
         className={`assistant-workspace ${presentationOpen ? 'has-presentation' : ''}`}
@@ -265,7 +246,7 @@ function VoiceSession({ configured }: { configured: boolean }) {
             aria-pressed={mobileView === 'presentation'}
             onClick={() => setMobileView('presentation')}
           >
-            Sunum
+            {presentation?.kind === 'pptx' ? 'Sunum' : 'Belge'}
           </button>
           <button
             type="button"
@@ -277,21 +258,16 @@ function VoiceSession({ configured }: { configured: boolean }) {
         </nav>
         <section
           className="presentation-stage pptx-panel"
-          aria-label="Sunum önizleme"
+          aria-label="Dosya önizleme"
           hidden={!presentationOpen}
           ref={presentationStage}
           tabIndex={-1}
         >
-          {presentation && (
-            <PowerPointPreview document={presentation} onClose={closePresentation} />
-          )}
+          {presentation && <DocumentPreview document={presentation} onClose={closePresentation} />}
         </section>
         <section className="chat-panel" aria-label="Sohbet">
           <header className="chat-header">
-            <div>
-              <span className="section-eyebrow">SANA EŞLİK EDEN BİR ASİSTAN</span>
-              <h2>Sohbetimiz</h2>
-            </div>
+            <h2>Sohbetimiz</h2>
             <div className="chat-header-actions">
               <button
                 ref={presentationButton}
@@ -300,7 +276,7 @@ function VoiceSession({ configured }: { configured: boolean }) {
                 onClick={() => setUrlDialogOpen(true)}
                 aria-haspopup="dialog"
               >
-                Sunum ekle
+                Dosya ekle
               </button>
               <button
                 className="clear-chat-button"
@@ -314,13 +290,16 @@ function VoiceSession({ configured }: { configured: boolean }) {
             </div>
           </header>
           {presentation && (
-            <article className="presentation-card" aria-label="Eklenen sunum" aria-live="polite">
+            <article className="presentation-card" aria-label="Eklenen dosya" aria-live="polite">
               <span className="presentation-file-icon" aria-hidden="true">
-                P
+                {{ pptx: 'P', docx: 'W', xlsx: 'X' }[presentation.kind]}
               </span>
               <div>
                 <strong title={presentation.name}>{presentation.name}</strong>
-                <span>PowerPoint · Salt okunur</span>
+                <span>
+                  {{ pptx: 'PowerPoint', docx: 'Word', xlsx: 'Excel' }[presentation.kind]} · Salt
+                  okunur
+                </span>
               </div>
               <div className="presentation-card-actions">
                 <button
@@ -332,7 +311,7 @@ function VoiceSession({ configured }: { configured: boolean }) {
                 </button>
                 {!presentationOpen && (
                   <button ref={fileButton} type="button" onClick={openPresentation}>
-                    Sunumu aç
+                    {presentation.kind === 'pptx' ? 'Sunumu aç' : 'Belgeyi aç'}
                   </button>
                 )}
               </div>
@@ -369,11 +348,6 @@ function VoiceSession({ configured }: { configured: boolean }) {
                   <span aria-hidden="true">✦</span>
                 </div>
                 <h3>Ne konuşalım?</h3>
-                <p>
-                  Sesinle başla, dilersen yazarak devam et.
-                  <br />
-                  Konuşmamız burada görünecek.
-                </p>
               </div>
             ) : (
               messages.map((message) => (
@@ -460,7 +434,7 @@ function VoiceSession({ configured }: { configured: boolean }) {
         </section>
       </div>
       {urlDialogOpen && (
-        <PowerPointUrlDialog
+        <DocumentUrlDialog
           onLoaded={(document) => {
             setPresentation(document);
             setPresentationOpen(false);
@@ -472,7 +446,6 @@ function VoiceSession({ configured }: { configured: boolean }) {
           }}
         />
       )}
-
     </main>
   );
 }
