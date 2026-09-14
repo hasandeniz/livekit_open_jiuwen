@@ -1,11 +1,34 @@
+# Build outputs and local tooling
 node_modules
 .next
 .git
+.github
+.claude
 .pnpm-store
 .pnpm-patch
 coverage
 out
+build
 *.log
+*.tsbuildinfo
+next-env.d.ts
+
+# Generated during pnpm install inside the image
+public/wasm
+
+# Files that do not affect the build; excluding them keeps the builder layer cached
+# when only docs, tests or container config change.
+*.md
+LICENSE
+tests
+Dockerfile
+.dockerignore
+docker-compose.yml
+.prettierrc
+.prettierignore
+
+# Secrets
 .env
 .env.*
 !.env.example
+*.pem
