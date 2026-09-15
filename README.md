@@ -49,6 +49,18 @@ Voice sessions work in development and production when the server credentials ar
 
 ## Production deployment
 
+### Kubernetes (teknofest)
+
+Runs as `digital-human` at https://teknofest.sadc-llm.com, deployed by Argo CD from
+[SADCAIVibe/argocd-deployments](https://github.com/SADCAIVibe/argocd-deployments),
+`clusters/teknofest/apps/digital-human/`. Don't `helm install` by hand.
+
+- **Release = deploy.** Publishing a GitHub release (cut from `elevenlabs_only`)
+  builds `ghcr.io/sadcaivibe/livekit_open_jiuwen:<tag>` and sets that tag in
+  argocd-deployments; Argo CD rolls it out within ~3 minutes. Pre-releases only build.
+- **Env vars:** `APP_ORIGIN` and friends in `env.yaml` there; `ELEVENLABS_API_KEY` /
+  `ELEVENLABS_AGENT_ID` with `./scripts/seal-env.sh teknofest digital-human KEY=VALUE`.
+
 ### Docker
 
 The repository includes a production `Dockerfile` and `docker-compose.yml`. Set the required values in the shell (or a root `.env` file that is excluded from the image), then run:
