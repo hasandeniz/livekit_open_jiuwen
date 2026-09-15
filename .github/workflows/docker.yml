@@ -56,3 +56,43 @@ jobs:
           # mode=max also caches the dependencies/builder stages, not just the final image.
           cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
           cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max,image-manifest=true,oci-mediatypes=true
+
+      # Auto-deploy: every app in argocd-deployments running this image (any
+      # cluster) is pointed at the new tag; Argo CD rolls it out within ~3 min.
+      # Pre-releases build an image but don't deploy.
+      - name: Deploy via argocd-deployments
+        if: ${{ !github.event.release.prerelease }}
+        env:
+          # Write-enabled deploy key of SADCAIVibe/argocd-deployments.
+          DEPLOY_KEY: ${{ secrets.GITOPS_DEPLOY_KEY }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "::warning::GITOPS_DEPLOY_KEY not set; image built but not deployed"
+            exit 0
+          fi
+          key="$RUNNER_TEMP/gitops_key"
+          install -m 600 /dev/null "$key"
+          printf '%s\n' "$DEPLOY_KEY" > "$key"
+          export GIT_SSH_COMMAND="ssh -i $key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+          git clone --depth 1 git@github.com:SADCAIVibe/argocd-deployments.git "$RUNNER_TEMP/gitops"
+          cd "$RUNNER_TEMP/gitops"
+
+          apps=""
+          for f in clusters/*/apps/*/values.yaml; do
+            grep -qx "  repository: $IMAGE" "$f" || continue
+            sed -i -E "/^image:/,/^[^ ]/ s/^(  tag: ).*/\1\"$TAG\"/" "$f"
+            apps="$apps $(echo "$f" | cut -d/ -f2,4)"
+          done
+          [ -n "$apps" ] || { echo "::warning::no app in argocd-deployments uses $IMAGE"; exit 0; }
+          git diff --quiet && { echo "already at $TAG:$apps"; exit 0; }
+
+          git -c user.name=github-actions -c user.email=github-actions@users.noreply.github.com \
+            commit -qam "${GITHUB_REPOSITORY#*/}: deploy $TAG to$apps" \
+            -m "Release: ${{ github.event.release.html_url }}"
+          # Another repo may have pushed meanwhile.
+          for attempt in 1 2 3; do
+            git push && break
+            git pull --rebase -q
+          done
+          echo "::notice::deployed $TAG to$apps"
