@@ -11,6 +11,9 @@ patchedDependencies:
   livekit-client@2.22.3:
     hash: knpfcvqrsttq6wnkt2x6syken4
     path: patches/livekit-client@2.22.3.patch
+  pptx-react-viewer@3.16.2:
+    hash: nduy4q46snwvs5izgunhkgwefy
+    path: patches/pptx-react-viewer@3.16.2.patch
 
 importers:
 
@@ -51,7 +54,7 @@ importers:
         version: 0.4.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       pptx-react-viewer:
         specifier: 3.16.2
-        version: 3.16.2(@ai-sdk/react@4.0.100(react@19.1.1)(zod@4.5.2))(ai@7.0.97(zod@4.5.2))(fast-xml-parser@5.11.1)(framer-motion@13.2.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(i18next@26.4.2(typescript@5.9.2))(jspdf@4.2.1)(jszip@3.10.2)(lucide-react@1.45.0(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react-i18next@17.0.13(i18next@26.4.2(typescript@5.9.2))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.9.2))(react-icons@5.7.0(react@19.1.1))(react@19.1.1)
+        version: 3.16.2(patch_hash=nduy4q46snwvs5izgunhkgwefy)(@ai-sdk/react@4.0.100(react@19.1.1)(zod@4.5.2))(ai@7.0.97(zod@4.5.2))(fast-xml-parser@5.11.1)(framer-motion@13.2.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(i18next@26.4.2(typescript@5.9.2))(jspdf@4.2.1)(jszip@3.10.2)(lucide-react@1.45.0(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react-i18next@17.0.13(i18next@26.4.2(typescript@5.9.2))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.9.2))(react-icons@5.7.0(react@19.1.1))(react@19.1.1)
       react:
         specifier: ^19.0.0
         version: 19.1.1
@@ -5133,7 +5136,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  pptx-react-viewer@3.16.2(@ai-sdk/react@4.0.100(react@19.1.1)(zod@4.5.2))(ai@7.0.97(zod@4.5.2))(fast-xml-parser@5.11.1)(framer-motion@13.2.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(i18next@26.4.2(typescript@5.9.2))(jspdf@4.2.1)(jszip@3.10.2)(lucide-react@1.45.0(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react-i18next@17.0.13(i18next@26.4.2(typescript@5.9.2))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.9.2))(react-icons@5.7.0(react@19.1.1))(react@19.1.1):
+  pptx-react-viewer@3.16.2(patch_hash=nduy4q46snwvs5izgunhkgwefy)(@ai-sdk/react@4.0.100(react@19.1.1)(zod@4.5.2))(ai@7.0.97(zod@4.5.2))(fast-xml-parser@5.11.1)(framer-motion@13.2.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(i18next@26.4.2(typescript@5.9.2))(jspdf@4.2.1)(jszip@3.10.2)(lucide-react@1.45.0(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react-i18next@17.0.13(i18next@26.4.2(typescript@5.9.2))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.9.2))(react-icons@5.7.0(react@19.1.1))(react@19.1.1):
     dependencies:
       clsx: 2.1.1
       dompurify: 3.4.15

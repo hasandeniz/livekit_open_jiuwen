@@ -1,0 +1,30 @@
+diff --git a/dist/chunk-42YQYM4M.js b/dist/chunk-42YQYM4M.js
+index 6f664cb8cea514eef744140ecec5e35aaf2507db..a1a798b8571491f7034ea4c99c9df99ef18e2458 100644
+--- a/dist/chunk-42YQYM4M.js
++++ b/dist/chunk-42YQYM4M.js
+@@ -149480,9 +149480,8 @@ var ROUNDED_CORNERS_RADIUS_PX = 8;
+ function chartAreaCornerRadius(chartData) {
+   return chartData?.roundedCorners === true ? ROUNDED_CORNERS_RADIUS_PX : void 0;
+ }
+-var CHART_PX_PER_PT = 4 / 3;
+ function chartFontPx(sizePt) {
+-  return sizePt * CHART_PX_PER_PT;
++  return sizePt * (4 / 3);
+ }
+ var DEFAULT_CHART_TEXT_PX = chartFontPx(10);
+ var DEFAULT_CHART_DATA_LABEL_PX = chartFontPx(9);
+diff --git a/dist/chunk-F3B7MWQ5.mjs b/dist/chunk-F3B7MWQ5.mjs
+index cecb6486a9e84fb6ea0f6aeabd8cf3e28ddd318c..30a8ce78b171597721d16770d4c859d2dee77b72 100644
+--- a/dist/chunk-F3B7MWQ5.mjs
++++ b/dist/chunk-F3B7MWQ5.mjs
+@@ -149473,9 +149473,8 @@ var ROUNDED_CORNERS_RADIUS_PX = 8;
+ function chartAreaCornerRadius(chartData) {
+   return chartData?.roundedCorners === true ? ROUNDED_CORNERS_RADIUS_PX : void 0;
+ }
+-var CHART_PX_PER_PT = 4 / 3;
+ function chartFontPx(sizePt) {
+-  return sizePt * CHART_PX_PER_PT;
++  return sizePt * (4 / 3);
+ }
+ var DEFAULT_CHART_TEXT_PX = chartFontPx(10);
+ var DEFAULT_CHART_DATA_LABEL_PX = chartFontPx(9);

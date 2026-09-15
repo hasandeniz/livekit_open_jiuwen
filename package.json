@@ -48,7 +48,8 @@
   "pnpm": {
     "patchedDependencies": {
       "livekit-client@2.22.3": "patches/livekit-client@2.22.3.patch",
-      "docx-preview@0.4.0": "patches/docx-preview@0.4.0.patch"
+      "docx-preview@0.4.0": "patches/docx-preview@0.4.0.patch",
+      "pptx-react-viewer@3.16.2": "patches/pptx-react-viewer@3.16.2.patch"
     }
   }
 }
