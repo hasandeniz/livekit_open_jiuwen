@@ -13,6 +13,46 @@ export const officeMimeTypes = {
   docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 };
 
+export async function loadOfficeDocument(
+  url: string,
+  signal: AbortSignal
+): Promise<OfficeDocument> {
+  let source: URL;
+  try {
+    source = new URL(url.trim());
+    if (!['http:', 'https:'].includes(source.protocol) || source.username || source.password) {
+      throw new Error();
+    }
+  } catch {
+    throw new Error('Geçerli bir HTTP veya HTTPS dosya bağlantısı gir.');
+  }
+  let response: Response;
+  try {
+    response = await fetch(source.href, { signal, credentials: 'omit' });
+  } catch {
+    signal.throwIfAborted();
+    throw new Error(
+      'Dosyaya erişilemiyor. Bağlantıyı ve dosya sunucusunun CORS izinlerini kontrol et.'
+    );
+  }
+  if (!response.ok) throw new Error(`Dosya indirilemedi (HTTP ${response.status}).`);
+  if (response.headers.get('content-type')?.includes('text/html')) {
+    throw new Error(
+      'Bu bağlantı bir web sayfası açıyor. Doğrudan .pptx, .docx veya .xlsx dosyasının bağlantısını kullan.'
+    );
+  }
+  const content = new Uint8Array(await response.arrayBuffer());
+  const kind = await detectOfficeKind(content);
+  signal.throwIfAborted();
+  let name = source.pathname.split('/').pop() || 'Dosya';
+  try {
+    name = decodeURIComponent(name);
+  } catch {
+    // Preserve filenames with invalid percent encoding.
+  }
+  return { id: crypto.randomUUID(), content, kind, name: officeFilename(name, kind) };
+}
+
 export async function detectOfficeKind(content: Uint8Array): Promise<OfficeDocument['kind']> {
   try {
     const archive = await JSZip.loadAsync(content);

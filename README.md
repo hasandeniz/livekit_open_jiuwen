@@ -27,7 +27,15 @@ Word files use `docx-preview` in the same workspace. Choose **Belgeyi aç** on t
 
 The downloaded Office archive determines the format, so signed URLs and URLs without filename extensions are supported. Invalid archives and unsupported formats are rejected before replacing the current document. Both preview libraries load on demand.
 
-The implementation uses [pptx-react-viewer](https://github.com/ChristopherVR/pptx-viewer/) with `SlideCanvas` and `useViewerBuildingBlocks`, editing and autosave disabled, and only custom slide navigation. The viewer is loaded on demand in the browser. `components/powerpoint/slide-preview.tsx` accepts presentation bytes and a filename so the future OpenJiuwen/ElevenLabs tool can reuse it. Tool calling is not wired yet.
+The implementation uses [pptx-react-viewer](https://github.com/ChristopherVR/pptx-viewer/) with `SlideCanvas` and `useViewerBuildingBlocks`, editing and autosave disabled, and only custom slide navigation. The viewer is loaded on demand in the browser. Manual URLs and OpenJiuwen tool results share the same Office download, validation, file card, and preview flow.
+
+Enable `agent_tool_response_full_payload` in the ElevenLabs agent's client events and start a new conversation after saving. The frontend handles it through `onAgentToolResponse`, parses successful OpenJiuwen JSON results (`ok: true`), and reads the first valid HTTP(S) URL from `handover_details.files[].url`, falling back to `output_path[]`. Signed queries are preserved. Local server paths and spoken message text are not used. Failed, blocked, or truncated events are not loaded; repeated tool call IDs are handled once per conversation.
+
+The file loads automatically into the existing chat file card; choose **Sunumu aç / Belgeyi aç** to preview it. The workspace currently holds one document, so the first URL is used for multi-file results, and a successful later download replaces the previous card. Loading supports cancellation, a 60-second timeout, and retry on download errors; failures preserve the current document. The OBS bucket must permit browser downloads from the deployed frontend origin via CORS. To verify the integration, ask the connected agent to generate a document, confirm that the card appears without opening the URL dialog, and open/download it. Repeat with Word/Excel output and check an expired or inaccessible link for the retry notice.
+
+For generation feedback, also enable `agent_tool_request` and `agent_tool_response`. The `build-and-run` tool's request starts a waiting card with elapsed time; its response ends it, then the existing download indicator takes over. Messages change after 30 and 120 seconds without claiming backend stages or percentage completion. Errors, disconnects, and clearing the chat remove the waiting state. Concurrent calls are tracked independently by call ID. If the tool is renamed, update `DOCUMENT_TOOL_NAME` in `lib/elevenlabs/tool-progress.ts`.
+
+The configured Teknofest agent has these events enabled. Its `build-and-run` tool uses `pre_tool_speech: "force"`, with a description instruction to acknowledge the request in the user's language before running it (for example, “Sunumunu hazırlıyorum, bu işlem biraz zaman alabilir. Hazır olduğunda ekranda görebileceksin.”). These settings live in ElevenLabs, not in the frontend deployment. Start a new conversation after changing them. The frontend does not generate separate speech or invent agent transcript messages. Verify the spoken acknowledgement in a real voice session; unit checks do not exercise the hosted model.
 
 The library's current package also imports its optional `ai` and `@ai-sdk/react` peers from its entry point. They are installed for Next.js module resolution; no AI chat or editing UI is mounted.
 
@@ -43,7 +51,7 @@ Configure voice, languages and LLM in ElevenLabs. Enable Language overrides in S
 - lib/digital-human/: renderer and mouth/gesture controls.
 - public/digital-human/ and vendor/: required FaceUnity assets and SDK.
 
-Mouth motion combines audio analysis with approximate character timing, not true phoneme tracking. Hand gestures use prerecorded animations. Playback volume is 55%. openJiuwen is not integrated yet.
+Mouth motion combines audio analysis with approximate character timing, not true phoneme tracking. Hand gestures use prerecorded animations. Playback volume is 55%. OpenJiuwen is called by the configured ElevenLabs server tool; its document results are consumed by the frontend.
 
 Voice sessions work in development and production when the server credentials are configured. Never expose keys through NEXT*PUBLIC* variables.
 

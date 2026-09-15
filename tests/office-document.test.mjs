@@ -15,9 +15,45 @@ const code = outputText.replace(
   "'jszip'",
   JSON.stringify(pathToFileURL(require.resolve('jszip')).href)
 );
-const { detectOfficeKind, officeFilename, officeMimeTypes } = await import(
+const { detectOfficeKind, officeFilename, officeMimeTypes, loadOfficeDocument } = await import(
   `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`
 );
+
+test('shared loader downloads signed URLs without credentials and detects actual Office contents', async (t) => {
+  const bytes = await archive('[Content_Types].xml', 'xl/workbook.xml');
+  const url = 'https://files.example.com/report?signature=a%2Bb&expires=123';
+  const controller = new AbortController();
+  t.mock.method(globalThis, 'fetch', async (input, options) => {
+    assert.equal(input, url);
+    assert.equal(options.credentials, 'omit');
+    assert.equal(options.signal, controller.signal);
+    return new Response(bytes);
+  });
+  const document = await loadOfficeDocument(url, controller.signal);
+  assert.equal(document.kind, 'xlsx');
+  assert.equal(document.name, 'report.xlsx');
+  assert.deepEqual(document.content, bytes);
+});
+
+test('shared loader rejects HTML, HTTP failures, invalid archives and cancelled downloads', async (t) => {
+  const controller = new AbortController();
+  const fetchMock = t.mock.method(globalThis, 'fetch');
+  for (const response of [
+    new Response('denied', { status: 403 }),
+    new Response('<html/>', { headers: { 'content-type': 'text/html' } }),
+    new Response('invalid archive'),
+  ]) {
+    fetchMock.mock.mockImplementation(async () => response);
+    await assert.rejects(loadOfficeDocument('https://files.example.com/a.pptx', controller.signal));
+  }
+  fetchMock.mock.mockImplementation(async () => {
+    controller.abort();
+    return new Response(await archive('[Content_Types].xml', 'word/document.xml'));
+  });
+  await assert.rejects(loadOfficeDocument('https://files.example.com/a.docx', controller.signal), {
+    name: 'AbortError',
+  });
+});
 
 async function archive(...paths) {
   const zip = new JSZip();

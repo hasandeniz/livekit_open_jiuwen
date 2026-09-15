@@ -2,7 +2,7 @@
 
 import { Component, type FormEvent, type ReactNode, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { type OfficeDocument, detectOfficeKind, officeFilename } from '@/lib/office-document';
+import { type OfficeDocument, loadOfficeDocument } from '@/lib/office-document';
 
 const SlidePreview = dynamic(() => import('./slide-preview'), {
   ssr: false,
@@ -65,40 +65,7 @@ export function DocumentUrlDialog({
     setLoading(true);
     const timeout = setTimeout(() => controller.abort('timeout'), 60_000);
     try {
-      let source: URL;
-      try {
-        source = new URL(url.trim());
-        if (!['http:', 'https:'].includes(source.protocol) || source.username || source.password) {
-          throw new Error();
-        }
-      } catch {
-        throw new Error('Geçerli bir HTTP veya HTTPS dosya bağlantısı gir.');
-      }
-      let response: Response;
-      try {
-        response = await fetch(source.href, { signal: controller.signal, credentials: 'omit' });
-      } catch {
-        throw new Error(
-          'Dosyaya erişilemiyor. Bağlantıyı ve dosya sunucusunun CORS izinlerini kontrol et.'
-        );
-      }
-      if (!response.ok) throw new Error(`Dosya indirilemedi (HTTP ${response.status}).`);
-      if (response.headers.get('content-type')?.includes('text/html')) {
-        throw new Error(
-          'Bu bağlantı bir web sayfası açıyor. Doğrudan .pptx, .docx veya .xlsx dosyasının bağlantısını kullan.'
-        );
-      }
-      const content = new Uint8Array(await response.arrayBuffer());
-      const kind = await detectOfficeKind(content);
-      if (controller.signal.aborted) return;
-      const segment = source.pathname.split('/').pop() || 'Dosya';
-      let name = segment;
-      try {
-        name = decodeURIComponent(segment);
-      } catch {
-        /* Keep the original filename. */
-      }
-      onLoaded({ id: crypto.randomUUID(), content, kind, name: officeFilename(name, kind) });
+      onLoaded(await loadOfficeDocument(url, controller.signal));
       onClose();
     } catch (cause) {
       if (!controller.signal.aborted) {

@@ -1,14 +1,26 @@
 'use client';
 
-import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useReducer, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ConversationProvider, useConversation } from '@elevenlabs/react';
 import { SUPPORTED_LANGUAGES } from '@/app-config';
 import { BrandLogo } from '@/components/app/brand-logo';
 import { ElevenLabsAvatar } from '@/components/elevenlabs/elevenlabs-avatar';
+import { ToolProgress } from '@/components/elevenlabs/tool-progress';
 import { DocumentPreview, DocumentUrlDialog } from '@/components/powerpoint/powerpoint-preview';
+import { toolDocumentUrl } from '@/lib/elevenlabs/tool-document';
+import {
+  DOCUMENT_TOOL_NAME,
+  initialToolProgress,
+  toolProgressReducer,
+} from '@/lib/elevenlabs/tool-progress';
 import { type TranscriptEntry, upsertTranscript } from '@/lib/elevenlabs/transcript';
-import { type OfficeDocument, officeFilename, officeMimeTypes } from '@/lib/office-document';
+import {
+  type OfficeDocument,
+  loadOfficeDocument,
+  officeFilename,
+  officeMimeTypes,
+} from '@/lib/office-document';
 
 type Language = 'en' | 'tr';
 
@@ -37,6 +49,58 @@ function VoiceSession({ configured }: { configured: boolean }) {
   const presentationButton = useRef<HTMLButtonElement>(null);
   const fileButton = useRef<HTMLButtonElement>(null);
   const presentationStage = useRef<HTMLElement>(null);
+  const toolRequest = useRef<AbortController | null>(null);
+  const handledToolCalls = useRef(new Set<string>());
+  const [toolLoading, setToolLoading] = useState(false);
+  const [toolProgress, dispatchToolProgress] = useReducer(toolProgressReducer, initialToolProgress);
+  const pendingToolTimes = Object.values(toolProgress.pending);
+  const [toolError, setToolError] = useState<string | null>(null);
+  const [retryDocument, setRetryDocument] = useState<{ url: string; callId: string } | null>(null);
+
+  function cancelToolDownload() {
+    toolRequest.current?.abort();
+    toolRequest.current = null;
+    setToolLoading(false);
+  }
+
+  function acceptDocument(document: OfficeDocument) {
+    cancelToolDownload();
+    setToolError(null);
+    setRetryDocument(null);
+    setPresentation(document);
+    setPresentationOpen(false);
+    setMobileView('chat');
+  }
+
+  async function loadToolDocument(url: string, callId: string) {
+    cancelToolDownload();
+    const controller = new AbortController();
+    toolRequest.current = controller;
+    setToolLoading(true);
+    setToolError(null);
+    setRetryDocument({ url, callId });
+    const timeout = setTimeout(() => controller.abort('timeout'), 60_000);
+    try {
+      const document = await loadOfficeDocument(url, controller.signal);
+      if (toolRequest.current === controller && !controller.signal.aborted) {
+        acceptDocument(document);
+      }
+    } catch (cause) {
+      if (toolRequest.current === controller) {
+        if (controller.signal.reason === 'timeout') {
+          setToolError('İndirme zaman aşımına uğradı. Tekrar dene.');
+        } else if (!controller.signal.aborted) {
+          setToolError(cause instanceof Error ? cause.message : 'Dosya yüklenemedi.');
+        }
+      }
+    } finally {
+      clearTimeout(timeout);
+      if (toolRequest.current === controller) {
+        toolRequest.current = null;
+        setToolLoading(false);
+      }
+    }
+  }
 
   useEffect(() => {
     if (presentationOpen) presentationStage.current?.focus({ preventScroll: true });
@@ -74,10 +138,13 @@ function VoiceSession({ configured }: { configured: boolean }) {
       setStarting(false);
     },
     onDisconnect: () => {
+      dispatchToolProgress({ type: 'reset' });
+      cancelToolDownload();
       startingRef.current = false;
       setStarting(false);
     },
     onError: (message, context) => {
+      dispatchToolProgress({ type: 'reset' });
       // The SDK supplies the provider's actual failure message. Keep the
       // fallback for browser/transport failures where it may be absent.
       const detail = typeof message === 'string' && message.trim() ? message.trim() : '';
@@ -104,6 +171,32 @@ function VoiceSession({ configured }: { configured: boolean }) {
       };
       setMessages((current) => upsertTranscript(current, entry));
     },
+    onAgentToolRequest: (event) => {
+      if (event.tool_name !== DOCUMENT_TOOL_NAME) return;
+      setToolError(null);
+      dispatchToolProgress({ type: 'start', id: event.tool_call_id, at: Date.now() });
+    },
+    onAgentToolResponse: (event) => {
+      if (event.tool_name === DOCUMENT_TOOL_NAME) {
+        dispatchToolProgress({ type: 'finish', id: event.tool_call_id });
+        if (event.is_error || ('is_blocked' in event && event.is_blocked)) {
+          setRetryDocument(null);
+          setToolError('Dosya hazırlanamadı. Asistandan tekrar denemesini iste.');
+        }
+      }
+      if (!('full_tool_result' in event) || event.is_error || event.is_blocked) return;
+      if (handledToolCalls.current.has(event.tool_call_id)) return;
+      if (event.truncated) {
+        cancelToolDownload();
+        setRetryDocument(null);
+        setToolError('Araç yanıtı eksik iletildi. Dosya bağlantısı alınamadı.');
+        return;
+      }
+      const url = toolDocumentUrl(event.full_tool_result);
+      if (!url) return;
+      handledToolCalls.current.add(event.tool_call_id);
+      void loadToolDocument(url, event.tool_call_id);
+    },
     onAgentResponseCorrection: ({ event_id, corrected_agent_response }) => {
       setMessages((current) =>
         upsertTranscript(current, {
@@ -121,6 +214,7 @@ function VoiceSession({ configured }: { configured: boolean }) {
   useEffect(
     () => () => {
       requestRef.current?.abort();
+      toolRequest.current?.abort();
     },
     []
   );
@@ -135,6 +229,12 @@ function VoiceSession({ configured }: { configured: boolean }) {
     setError(null);
 
     setMessages([]);
+
+    cancelToolDownload();
+    handledToolCalls.current.clear();
+    dispatchToolProgress({ type: 'reset' });
+    setToolError(null);
+    setRetryDocument(null);
 
     const controller = new AbortController();
     requestRef.current = controller;
@@ -176,6 +276,8 @@ function VoiceSession({ configured }: { configured: boolean }) {
   }
 
   function disconnect() {
+    dispatchToolProgress({ type: 'reset' });
+    cancelToolDownload();
     requestRef.current?.abort();
     endSession();
     startingRef.current = false;
@@ -197,6 +299,10 @@ function VoiceSession({ configured }: { configured: boolean }) {
   }
 
   function clearConversation() {
+    dispatchToolProgress({ type: 'reset' });
+    cancelToolDownload();
+    setToolError(null);
+    setRetryDocument(null);
     setMessages([]);
     setError(null);
     followMessages.current = true;
@@ -317,6 +423,39 @@ function VoiceSession({ configured }: { configured: boolean }) {
               </div>
             </article>
           )}
+          {pendingToolTimes.length > 0 && (
+            <ToolProgress startedAt={Math.min(...pendingToolTimes)} />
+          )}
+          {toolLoading && (
+            <div className="session-notice" role="status">
+              <p>Asistanın hazırladığı dosya yükleniyor…</p>
+              <button className="tool-document-action" type="button" onClick={cancelToolDownload}>
+                İptal
+              </button>
+            </div>
+          )}
+          {toolError && (
+            <div className="session-notice" role="alert">
+              <strong>Dosya yüklenemedi</strong>
+              <p>{toolError}</p>
+              {retryDocument && !toolLoading && (
+                <button
+                  className="tool-document-action"
+                  type="button"
+                  onClick={() => void loadToolDocument(retryDocument.url, retryDocument.callId)}
+                >
+                  Tekrar dene
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setToolError(null)}
+                aria-label="Dosya bildirimini kapat"
+              >
+                ×
+              </button>
+            </div>
+          )}
           {(!configured || error) && (
             <div className="session-notice" role="alert">
               <strong>
@@ -435,11 +574,7 @@ function VoiceSession({ configured }: { configured: boolean }) {
       </div>
       {urlDialogOpen && (
         <DocumentUrlDialog
-          onLoaded={(document) => {
-            setPresentation(document);
-            setPresentationOpen(false);
-            setMobileView('chat');
-          }}
+          onLoaded={acceptDocument}
           onClose={() => {
             setUrlDialogOpen(false);
             requestAnimationFrame(() => presentationButton.current?.focus());
